@@ -1,0 +1,2279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nafre — Video Editor & Developer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    /* =============================================
+       RESET & BASE
+    ============================================= */
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+
+    :root {
+      --deep-space:    #03010a;
+      --space-mid:     #080520;
+      --nebula-blue:   #0d0a35;
+      --nebula-purple: #1a0a3d;
+      --star-white:    rgba(255, 255, 255, 0.9);
+      --star-blue:     rgba(180, 210, 255, 0.8);
+      --star-purple:   rgba(200, 160, 255, 0.7);
+      --accent-cyan:   #00f5ff;
+      --accent-violet: #bf00ff;
+      --accent-pink:   #ff00aa;
+      --text-main:     #e8e0ff;
+      --text-dim:      #8878aa;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--deep-space);
+      font-family: 'Exo 2', sans-serif;
+      color: var(--text-main);
+      cursor: none; /* we'll use custom cursor later */
+    }
+
+    /* =============================================
+       GALAXY CANVAS (starfield lives here)
+    ============================================= */
+    #galaxy-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+    }
+
+    /* =============================================
+       NEBULA OVERLAY — layered purple/blue glow
+    ============================================= */
+    .nebula-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 30%,  rgba(80, 0, 160, 0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 60% at 80% 20%,  rgba(0, 60, 180, 0.15) 0%, transparent 70%),
+        radial-gradient(ellipse 70% 50% at 50% 80%,  rgba(100, 0, 180, 0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 70% 60%,  rgba(0, 120, 255, 0.10) 0%, transparent 60%);
+    }
+
+    /* animated nebula drift */
+    .nebula-layer::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 40% at 30% 50%, rgba(60, 0, 120, 0.10) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 75% 40%, rgba(0, 80, 200, 0.08) 0%, transparent 60%);
+      animation: nebulaDrift 20s ease-in-out infinite alternate;
+    }
+
+    @keyframes nebulaDrift {
+      0%   { transform: translate(0, 0) scale(1); opacity: 0.8; }
+      50%  { transform: translate(-20px, 15px) scale(1.05); opacity: 1; }
+      100% { transform: translate(15px, -10px) scale(0.97); opacity: 0.7; }
+    }
+
+    /* =============================================
+       MAIN SCENE CONTAINER
+    ============================================= */
+    #scene {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 48px 0 0 0;
+    }
+
+    /* =============================================
+       HEADER — greeting text
+    ============================================= */
+    #greeting {
+      text-align: center;
+      user-select: none;
+      animation: fadeSlideDown 1.2s cubic-bezier(.16,1,.3,1) both;
+    }
+
+    #greeting .hello {
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 300;
+      font-size: clamp(16px, 2.4vw, 26px);
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    #greeting .name {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(34px, 6.5vw, 72px);
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, #ffffff 0%, #c8a0ff 40%, #00f5ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+      text-shadow: none;
+      filter: drop-shadow(0 0 30px rgba(191,0,255,0.4));
+    }
+
+    #greeting .role {
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 300;
+      font-size: clamp(13px, 1.8vw, 19px);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      margin-top: 10px;
+      opacity: 0.8;
+    }
+
+    #greeting .copyright {
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 300;
+      font-size: clamp(10px, 1.2vw, 13px);
+      letter-spacing: 0.18em;
+      text-align: center;
+      color: var(--text-dim);
+      opacity: 0.35;
+      margin-top: 8px;
+    }
+
+    @keyframes fadeSlideDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =============================================
+       PLANETS ROW
+    ============================================= */
+    #planets-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(40px, 7.5vw, 120px);
+      flex: 1;
+    }
+
+    .planet-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      cursor: none;
+      position: relative;
+    }
+
+    .planet-canvas {
+      display: block;
+      width:  clamp(100px, 12vw, 150px);
+      height: clamp(100px, 12vw, 150px);
+      border-radius: 50%;
+      transition: filter 0.3s ease;
+      animation: swayPlanet 5s ease-in-out infinite;
+    }
+
+    .planet-wrap:nth-child(1) .planet-canvas { animation-delay:  0s;    animation-duration: 5.2s; }
+    .planet-wrap:nth-child(2) .planet-canvas { animation-delay: -1.4s;  animation-duration: 4.7s; }
+    .planet-wrap:nth-child(3) .planet-canvas { animation-delay: -2.8s;  animation-duration: 5.5s; }
+    .planet-wrap:nth-child(4) .planet-canvas { animation-delay: -3.5s;  animation-duration: 4.9s; }
+
+    .planet-wrap:hover .planet-canvas {
+      filter: brightness(1.35) saturate(1.4);
+    }
+
+    /* orbit ring that appears on hover */
+    .planet-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -54%) rotateX(72deg);
+      border-radius: 50%;
+      width:  clamp(130px, 15vw, 196px);
+      height: clamp(32px,  3.8vw, 49px);
+      border: 1px solid rgba(255,255,255,0.15);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
+    .planet-wrap:hover .planet-ring { opacity: 1; }
+
+    /* label below planet */
+    .planet-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(9px, 1.1vw, 13px);
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #fff;
+      opacity: 0.55;
+      transition: opacity 0.3s, color 0.3s;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .planet-wrap:hover .planet-label { opacity: 1; }
+
+    /* targeted state */
+    .planet-wrap.targeted .planet-canvas {
+      filter: brightness(1.6) saturate(1.8);
+    }
+    .planet-wrap.targeted .planet-label {
+      opacity: 1;
+      color: var(--accent-cyan);
+    }
+
+    /* sway = float up/down + gentle left/right lean */
+    @keyframes swayPlanet {
+      0%   { transform: translateY(0px)   rotate(0deg);    }
+      25%  { transform: translateY(-10px) rotate(1.5deg);  }
+      50%  { transform: translateY(-16px) rotate(0deg);    }
+      75%  { transform: translateY(-8px)  rotate(-1.5deg); }
+      100% { transform: translateY(0px)   rotate(0deg);    }
+    }
+
+    /* =============================================
+       SPACESHIP — fixed to viewport, JS-driven X
+    ============================================= */
+    #ship-dock {
+      width: 100%;
+      height: 130px;
+      position: relative;
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+
+    /* FIXED to viewport so screen X coords work perfectly */
+    #spaceship {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: clamp(52px, 7vw, 88px);
+      pointer-events: none;
+      z-index: 20;
+      filter: drop-shadow(0 0 12px rgba(0,245,255,0.7))
+              drop-shadow(0 0 28px rgba(0,180,255,0.4));
+    }
+
+    /* engine glow canvas — also fixed */
+    #engine-canvas {
+      position: fixed;
+      bottom: 0; left: 0;
+      width: 100%; height: 160px;
+      pointer-events: none;
+      z-index: 19;
+    }
+
+    /* aim line */
+    #aim-line {
+      position: fixed;
+      left: 0; top: 0;
+      width: 2px;
+      pointer-events: none;
+      z-index: 18;
+      background: linear-gradient(to top, rgba(0,245,255,0.55), rgba(0,245,255,0));
+      border-radius: 2px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    /* =============================================
+       MODAL — frosted glass panel
+    ============================================= */
+    #modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(2, 0, 18, 0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    #modal-backdrop.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #modal-box {
+      position: relative;
+      width: min(1100px, 76vw);
+      max-height: 80vh;
+      background: rgba(8, 4, 30, 0.82);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 20px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 8px 60px rgba(0,0,0,0.7),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      overflow: hidden;
+      transform: translateY(30px) scale(0.96);
+      transition: transform 0.4s cubic-bezier(.16,1,.3,1), box-shadow 0.4s;
+      display: flex;
+      flex-direction: column;
+    }
+    #modal-backdrop.open #modal-box {
+      transform: translateY(0) scale(1);
+    }
+
+    /* colored top accent bar — changes per planet */
+    #modal-accent-bar {
+      height: 3px;
+      width: 100%;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    /* modal header */
+    #modal-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 22px 24px 16px;
+      flex-shrink: 0;
+    }
+
+    #modal-planet-icon {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 16px rgba(0,200,255,0.3);
+    }
+
+    #modal-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(16px, 2.5vw, 22px);
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #fff 0%, #c8a0ff 60%, #00f5ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    #modal-subtitle {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 12px;
+      font-weight: 300;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-top: 3px;
+    }
+
+    /* close button */
+    #modal-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-dim);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      z-index: 2;
+    }
+    #modal-close:hover {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    /* divider */
+    #modal-divider {
+      height: 1px;
+      margin: 0 24px;
+      background: rgba(255,255,255,0.07);
+      flex-shrink: 0;
+    }
+
+    /* scrollable body */
+    #modal-body {
+      padding: 20px 24px 28px;
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.12) transparent;
+    }
+    #modal-body::-webkit-scrollbar { width: 4px; }
+    #modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+
+    /* thumbnail image area */
+    #modal-thumb {
+      width: 100%;
+      height: clamp(100px, 18vw, 160px);
+      border-radius: 12px;
+      object-fit: cover;
+      margin-bottom: 18px;
+      display: none; /* shown when src is set */
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* body content */
+    #modal-content p {
+      font-family: 'Exo 2', sans-serif;
+      font-size: clamp(13px, 1.5vw, 15px);
+      font-weight: 300;
+      line-height: 1.75;
+      color: rgba(230,220,255,0.85);
+      margin-bottom: 14px;
+    }
+    #modal-content h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin: 20px 0 8px;
+    }
+    #modal-content a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(0,245,255,0.25);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    #modal-content a:hover {
+      color: #fff;
+      border-color: rgba(255,255,255,0.4);
+    }
+
+    /* pill tags */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+    .tag {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 99px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: rgba(220,210,255,0.8);
+    }
+
+    /* link buttons */
+    .link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-main);
+      font-family: 'Exo 2', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      margin: 6px 8px 6px 0;
+      cursor: pointer;
+    }
+    .link-btn:hover {
+      background: rgba(255,255,255,0.10);
+      border-color: rgba(255,255,255,0.25);
+      transform: translateY(-2px);
+    }
+
+    /* FAQ accordion */
+    .faq-item { margin-bottom: 12px; }
+    .faq-q {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s;
+      user-select: none;
+    }
+    .faq-q:hover { background: rgba(255,255,255,0.07); }
+    .faq-q .arrow { transition: transform 0.25s; font-style: normal; }
+    .faq-item.open .faq-q .arrow { transform: rotate(180deg); }
+    .faq-a {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 13px;
+      font-weight: 300;
+      line-height: 1.7;
+      color: rgba(200,190,240,0.8);
+      padding: 0 16px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+    .faq-item.open .faq-a { max-height: 200px; padding: 10px 16px 4px; }
+
+    /* =============================================
+       CREDITS
+    ============================================= */
+    #laser-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    /* screen flash on impact */
+    #impact-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 7;
+      opacity: 0;
+      transition: opacity 0.05s;
+    }
+
+    /* planet hit shake */
+    @keyframes planetShake {
+      0%   { transform: translateX(0)   translateY(0); }
+      20%  { transform: translateX(-6px) translateY(-3px); }
+      40%  { transform: translateX(5px)  translateY(2px); }
+      60%  { transform: translateX(-4px) translateY(-2px); }
+      80%  { transform: translateX(3px)  translateY(1px); }
+      100% { transform: translateX(0)   translateY(0); }
+    }
+    .planet-wrap.shaking { animation: planetShake 0.35s ease forwards; }
+
+    /* ── firing lock is handled in JS isFiring flag only ── */
+
+    /* =============================================
+       MUSIC MUTE BUTTON
+    ============================================= */
+    #music-btn {
+      position: fixed;
+      bottom: 18px;
+      right: 24px;
+      z-index: 30;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,245,255,0.4);
+      background: rgba(8,4,30,0.80);
+      backdrop-filter: blur(10px);
+      color: var(--accent-cyan);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.25s, color 0.25s, background 0.25s, transform 0.2s;
+    }
+    #music-btn:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(0,245,255,0.10);
+      transform: scale(1.12);
+    }
+    /* muted state */
+    #music-btn.muted {
+      border-color: rgba(255,255,255,0.15);
+      color: var(--text-dim);
+    }
+    #music-btn.muted:hover {
+      border-color: rgba(255,255,255,0.35);
+      color: #fff;
+    }
+    /* pulse ring when playing */
+    #music-btn:not(.muted)::after {
+      content: '';
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,245,255,0.25);
+      animation: musicPulse 2.2s ease-in-out infinite;
+    }
+    @keyframes musicPulse {
+      0%,100% { transform: scale(1);    opacity: 0.7; }
+      50%      { transform: scale(1.25); opacity: 0;   }
+    }
+
+    /* =============================================
+       CREDITS
+    ============================================= */
+    #credits {
+      position: fixed;
+      bottom: 18px;
+      left: 24px;
+      z-index: 10;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+      opacity: 0.45;
+      text-transform: none;
+      line-height: 1.6;
+      max-width: 260px;
+    }
+    #credits a {
+      color: var(--text-dim);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      opacity: 0.7;
+    }
+    #credits a:hover { opacity: 1; color: var(--accent-cyan); }
+
+    /* =============================================
+       CUSTOM CURSOR (Step 3 adds the ship)
+    ============================================= */
+    #cursor-dot {
+      position: fixed;
+      width: 6px; height: 6px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 10px var(--accent-cyan), 0 0 20px var(--accent-cyan);
+      transition: transform 0.05s;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- STARFIELD CANVAS -->
+  <canvas id="galaxy-canvas"></canvas>
+
+  <!-- NEBULA ATMOSPHERE -->
+  <div class="nebula-layer"></div>
+
+  <!-- MAIN SCENE -->
+  <div id="scene">
+
+    <!-- GREETING -->
+    <div id="greeting">
+      <p class="hello">Hi! I'm</p>
+      <h1 class="name">Nathan "Nafre"</h1>
+      <p class="role">Video Editor &amp; Developer</p>
+      <p class="copyright">&copy; Nathan Fred Bragat</p>
+    </div>
+
+    <!-- PLANETS ROW -->
+    <div id="planets-row">
+
+      <!-- ABOUT — warm lava world -->
+      <div class="planet-wrap" data-planet="about" title="About">
+        <div class="planet-ring" style="border-color:rgba(255,120,60,0.35);"></div>
+        <canvas class="planet-canvas" id="planet-about" width="140" height="140"></canvas>
+        <span class="planet-label" style="color:#ff9060;">About</span>
+      </div>
+
+      <!-- WORKS — ocean/teal tech world -->
+      <div class="planet-wrap" data-planet="works" title="Works">
+        <div class="planet-ring" style="border-color:rgba(0,240,200,0.35);"></div>
+        <canvas class="planet-canvas" id="planet-works" width="140" height="140"></canvas>
+        <span class="planet-label" style="color:#00f0c8;">Works</span>
+      </div>
+
+      <!-- LINKS — golden ringed gas giant -->
+      <div class="planet-wrap" data-planet="links" title="Links">
+        <div class="planet-ring" style="border-color:rgba(255,200,60,0.45);"></div>
+        <canvas class="planet-canvas" id="planet-links" width="140" height="140"></canvas>
+        <span class="planet-label" style="color:#ffd060;">Links</span>
+      </div>
+
+      <!-- FAQ — icy violet world -->
+      <div class="planet-wrap" data-planet="faq" title="FAQ">
+        <div class="planet-ring" style="border-color:rgba(160,120,255,0.35);"></div>
+        <canvas class="planet-canvas" id="planet-faq" width="140" height="140"></canvas>
+        <span class="planet-label" style="color:#c0a0ff;">FAQ</span>
+      </div>
+
+    </div>
+
+    <!-- SHIP DOCK -->
+    <div id="ship-dock">
+      <canvas id="engine-canvas"></canvas>
+
+      <!-- SVG Spaceship — drawn inline for full CSS control -->
+      <svg id="spaceship" viewBox="0 0 88 110" xmlns="http://www.w3.org/2000/svg">
+        <!-- engine pods -->
+        <ellipse cx="22" cy="82" rx="9" ry="5" fill="#0a1a2e" opacity="0.9"/>
+        <ellipse cx="66" cy="82" rx="9" ry="5" fill="#0a1a2e" opacity="0.9"/>
+        <!-- main body -->
+        <path d="M44 8 C44 8 62 38 66 68 L44 78 L22 68 C26 38 44 8 44 8Z"
+              fill="url(#shipBodyGrad)" />
+        <!-- cockpit window -->
+        <ellipse cx="44" cy="36" rx="10" ry="14"
+                 fill="url(#cockpitGrad)" opacity="0.95"/>
+        <!-- cockpit rim -->
+        <ellipse cx="44" cy="36" rx="10" ry="14"
+                 fill="none" stroke="rgba(0,245,255,0.5)" stroke-width="1.2"/>
+        <!-- left wing -->
+        <path d="M22 68 L4 90 L22 82Z" fill="url(#wingGradL)"/>
+        <!-- right wing -->
+        <path d="M66 68 L84 90 L66 82Z" fill="url(#wingGradR)"/>
+        <!-- wing accent lines -->
+        <line x1="22" y1="72" x2="8"  y2="88" stroke="rgba(0,245,255,0.35)" stroke-width="1"/>
+        <line x1="66" y1="72" x2="80" y2="88" stroke="rgba(0,245,255,0.35)" stroke-width="1"/>
+        <!-- hull detail lines -->
+        <line x1="44" y1="20" x2="44" y2="70" stroke="rgba(0,245,255,0.2)" stroke-width="1" stroke-dasharray="3,4"/>
+        <line x1="36" y1="50" x2="52" y2="50" stroke="rgba(0,245,255,0.18)" stroke-width="0.8"/>
+        <line x1="34" y1="60" x2="54" y2="60" stroke="rgba(0,245,255,0.18)" stroke-width="0.8"/>
+        <!-- engine nozzles -->
+        <rect x="17" y="80" width="10" height="8" rx="3" fill="#061020"/>
+        <rect x="61" y="80" width="10" height="8" rx="3" fill="#061020"/>
+        <!-- nozzle glow rings -->
+        <ellipse cx="22" cy="88" rx="5" ry="2.5" fill="rgba(0,200,255,0.6)"/>
+        <ellipse cx="66" cy="88" rx="5" ry="2.5" fill="rgba(0,200,255,0.6)"/>
+        <!-- center engine -->
+        <rect x="38" y="75" width="12" height="10" rx="4" fill="#061020"/>
+        <ellipse cx="44" cy="85" rx="6" ry="3" fill="rgba(0,220,255,0.7)"/>
+
+        <!-- GRADIENTS -->
+        <defs>
+          <linearGradient id="shipBodyGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"   stop-color="#1a3a5c"/>
+            <stop offset="40%"  stop-color="#0d2540"/>
+            <stop offset="100%" stop-color="#061525"/>
+          </linearGradient>
+          <radialGradient id="cockpitGrad" cx="40%" cy="35%">
+            <stop offset="0%"   stop-color="#80eeff"/>
+            <stop offset="50%"  stop-color="#00aadd"/>
+            <stop offset="100%" stop-color="#003a60"/>
+          </radialGradient>
+          <linearGradient id="wingGradL" x1="1" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#0d2540"/>
+            <stop offset="100%" stop-color="#040e1a"/>
+          </linearGradient>
+          <linearGradient id="wingGradR" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"   stop-color="#0d2540"/>
+            <stop offset="100%" stop-color="#040e1a"/>
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <!-- aim line -->
+      <div id="aim-line"></div>
+    </div>
+
+  </div>
+
+  <!-- ==========================================
+       MODAL
+  =========================================== -->
+  <div id="modal-backdrop">
+    <div id="modal-box">
+      <div id="modal-accent-bar"></div>
+
+      <div id="modal-header">
+        <canvas id="modal-planet-icon" width="48" height="48"></canvas>
+        <div>
+          <div id="modal-title">About</div>
+          <div id="modal-subtitle">Section</div>
+        </div>
+      </div>
+      <button id="modal-close" aria-label="Close">✕</button>
+
+      <div id="modal-divider"></div>
+
+      <div id="modal-body">
+        <img id="modal-thumb" src="" alt="" />
+        <div id="modal-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LASER CANVAS — full screen, drawn via JS -->
+  <canvas id="laser-canvas"></canvas>
+  <!-- IMPACT FLASH overlay -->
+  <div id="impact-flash"></div>
+
+  <!-- BGM — real audio file -->
+  <audio id="bgm" loop preload="auto">
+    <source src="assets/sounds/Mesmerizing Galaxy Loop.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- CREDITS -->
+  <div id="credits">
+    <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:4px;color:rgba(180,160,220,0.6);">Music</div>
+    "Mesmerizing Galaxy" Kevin MacLeod (incompetech.com)<br>
+    Licensed under <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank">Creative Commons: By Attribution 4.0</a>
+  </div>
+
+  <!-- MUTE BUTTON — speaker icon, ON by default -->
+  <button id="music-btn" title="Mute / Unmute BGM">&#128266;</button>
+
+  <!-- CUSTOM CURSOR -->
+  <div id="cursor-dot"></div>
+
+  <!-- ============================================
+       JAVASCRIPT — STARFIELD ENGINE
+  ============================================= -->
+  <script>
+    // ── CANVAS SETUP ──────────────────────────────
+    const canvas = document.getElementById('galaxy-canvas');
+    const ctx    = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', () => { resize(); initStars(); });
+
+    // ── STAR LAYERS (3 depths for parallax) ───────
+    const LAYERS = [
+      { count: 180, speed: 0.4, minR: 0.3, maxR: 0.8,  alpha: 0.5  }, // far
+      { count: 120, speed: 0.9, minR: 0.6, maxR: 1.4,  alpha: 0.75 }, // mid
+      { count:  60, speed: 1.8, minR: 1.0, maxR: 2.2,  alpha: 0.95 }, // near
+    ];
+
+    // Star color palette
+    const STAR_COLORS = [
+      'rgba(255,255,255,',
+      'rgba(200,220,255,',
+      'rgba(220,180,255,',
+      'rgba(180,230,255,',
+    ];
+
+    let stars = [];
+
+    function mkStar(layer, y = null) {
+      return {
+        x:     Math.random() * canvas.width,
+        y:     y !== null ? y : Math.random() * canvas.height,
+        r:     layer.minR + Math.random() * (layer.maxR - layer.minR),
+        speed: layer.speed * (0.7 + Math.random() * 0.6),
+        alpha: layer.alpha * (0.5 + Math.random() * 0.5),
+        color: STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)],
+        twinkleSpeed: 0.005 + Math.random() * 0.015,
+        twinkleOffset: Math.random() * Math.PI * 2,
+        layer,
+      };
+    }
+
+    function initStars() {
+      stars = [];
+      LAYERS.forEach(layer => {
+        for (let i = 0; i < layer.count; i++) {
+          stars.push(mkStar(layer));
+        }
+      });
+    }
+    initStars();
+
+    // ── SHOOTING STARS ────────────────────────────
+    let shootingStars = [];
+
+    function spawnShootingStar() {
+      shootingStars.push({
+        x:     Math.random() * canvas.width * 1.2 - canvas.width * 0.1,
+        y:     -20,
+        len:   60 + Math.random() * 80,
+        speed: 8 + Math.random() * 10,
+        alpha: 0.8 + Math.random() * 0.2,
+        angle: Math.PI / 2 + (Math.random() - 0.5) * 0.4,
+      });
+    }
+
+    // spawn shooting stars periodically
+    setInterval(spawnShootingStar, 3500 + Math.random() * 3000);
+
+    // ── CURSOR DOT ────────────────────────────────
+    const cursorDot = document.getElementById('cursor-dot');
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+
+    document.addEventListener('mousemove', e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      cursorDot.style.left = mouseX + 'px';
+      cursorDot.style.top  = mouseY + 'px';
+    });
+
+    // ── MAIN RENDER LOOP ──────────────────────────
+    let t = 0;
+
+    function draw() {
+      t++;
+
+      // deep space gradient background
+      const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bg.addColorStop(0,   '#03010a');
+      bg.addColorStop(0.3, '#080520');
+      bg.addColorStop(0.7, '#0d0a35');
+      bg.addColorStop(1,   '#080520');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // draw & update stars
+      stars.forEach(s => {
+        // twinkle
+        const tw = Math.sin(t * s.twinkleSpeed + s.twinkleOffset);
+        const a  = s.alpha * (0.7 + 0.3 * tw);
+
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = s.color + a + ')';
+        ctx.fill();
+
+        // glow for bigger stars
+        if (s.r > 1.4) {
+          const grd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 4);
+          grd.addColorStop(0, s.color + (a * 0.4) + ')');
+          grd.addColorStop(1, s.color + '0)');
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r * 4, 0, Math.PI * 2);
+          ctx.fillStyle = grd;
+          ctx.fill();
+        }
+
+        // move downward
+        s.y += s.speed;
+        if (s.y > canvas.height + 4) {
+          s.y = -4;
+          s.x = Math.random() * canvas.width;
+        }
+      });
+
+      // draw shooting stars
+      shootingStars = shootingStars.filter(ss => ss.alpha > 0.01);
+      shootingStars.forEach(ss => {
+        const dx = Math.cos(ss.angle) * ss.len;
+        const dy = Math.sin(ss.angle) * ss.len;
+
+        const grad = ctx.createLinearGradient(ss.x, ss.y, ss.x + dx, ss.y + dy);
+        grad.addColorStop(0, `rgba(255,255,255,0)`);
+        grad.addColorStop(1, `rgba(220,200,255,${ss.alpha})`);
+
+        ctx.beginPath();
+        ctx.moveTo(ss.x, ss.y);
+        ctx.lineTo(ss.x + dx, ss.y + dy);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ss.x += Math.cos(ss.angle) * ss.speed;
+        ss.y += Math.sin(ss.angle) * ss.speed;
+        ss.alpha -= 0.012;
+
+        if (ss.y > canvas.height + 50) ss.alpha = 0;
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  </script>
+
+  <!-- ============================================
+       JAVASCRIPT — PLANET ENGINE
+  ============================================= -->
+  <script>
+    // ── PLANET DRAWING UTILITIES ──────────────────
+
+    function drawPlanetBase(ctx, size, colors) {
+      const cx = size / 2, cy = size / 2, r = size / 2 - 2;
+      // main sphere gradient
+      const sphere = ctx.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.05, cx, cy, r);
+      colors.forEach(([stop, col]) => sphere.addColorStop(stop, col));
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = sphere;
+      ctx.fill();
+    }
+
+    function drawAtmosphere(ctx, size, color) {
+      const cx = size/2, cy = size/2, r = size/2 - 2;
+      const atm = ctx.createRadialGradient(cx, cy, r*0.7, cx, cy, r);
+      atm.addColorStop(0, 'rgba(0,0,0,0)');
+      atm.addColorStop(1, color);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = atm;
+      ctx.fill();
+    }
+
+    function drawBands(ctx, size, bands) {
+      const cx = size/2, cy = size/2, r = size/2 - 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.clip();
+      bands.forEach(({ y, h, color, alpha }) => {
+        ctx.fillStyle = color.replace('A', alpha ?? '0.12');
+        ctx.fillRect(0, cy + y - h/2, size, h);
+      });
+      ctx.restore();
+    }
+
+    function drawCraters(ctx, size, craters) {
+      const cx = size/2, cy = size/2, r = size/2 - 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.clip();
+      craters.forEach(({ x, y, r: cr, alpha }) => {
+        ctx.beginPath();
+        ctx.arc(cx + x, cy + y, cr, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(0,0,0,${alpha ?? 0.2})`;
+        ctx.fill();
+        // rim highlight
+        ctx.beginPath();
+        ctx.arc(cx + x - cr*0.2, cy + y - cr*0.2, cr, 0, Math.PI*2);
+        ctx.strokeStyle = `rgba(255,255,255,0.08)`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    function drawShineHighlight(ctx, size) {
+      const cx = size/2, cy = size/2, r = size/2 - 2;
+      const shine = ctx.createRadialGradient(cx - r*0.38, cy - r*0.38, 0, cx - r*0.2, cy - r*0.2, r*0.65);
+      shine.addColorStop(0, 'rgba(255,255,255,0.22)');
+      shine.addColorStop(0.5,'rgba(255,255,255,0.04)');
+      shine.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.clip();
+      ctx.fillStyle = shine;
+      ctx.fillRect(0, 0, size, size);
+      ctx.restore();
+    }
+
+    // ── NOISE / SURFACE TEXTURE ───────────────────
+    // draws tiny semi-random specks clipped to the planet sphere
+    function drawNoiseTexture(ctx, size, tintR, tintG, tintB, density = 0.28) {
+      const cx = size/2, cy = size/2, r = size/2 - 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.clip();
+      // scatter tiny dots
+      const count = Math.floor(size * size * density);
+      for (let i = 0; i < count; i++) {
+        const px = Math.random() * size;
+        const py = Math.random() * size;
+        // only draw inside the circle
+        if ((px-cx)*(px-cx) + (py-cy)*(py-cy) > r*r) continue;
+        const a  = Math.random() * 0.09;
+        const rs = Math.random() * 1.1;
+        ctx.beginPath();
+        ctx.arc(px, py, rs, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(${tintR},${tintG},${tintB},${a.toFixed(2)})`;
+        ctx.fill();
+      }
+      // add a few brighter specks (surface highlights)
+      for (let i = 0; i < 18; i++) {
+        const px = cx + (Math.random()-0.5) * r * 1.8;
+        const py = cy + (Math.random()-0.5) * r * 1.8;
+        if ((px-cx)*(px-cx) + (py-cy)*(py-cy) > r*r) continue;
+        ctx.beginPath();
+        ctx.arc(px, py, 0.6 + Math.random() * 0.8, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,255,255,${(Math.random()*0.12).toFixed(2)})`;
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawGlowRing(ctx, size, color, spread = 18) {
+      const cx = size/2, cy = size/2, r = size/2 - 2;
+      const glow = ctx.createRadialGradient(cx, cy, r - 2, cx, cy, r + spread);
+      glow.addColorStop(0, color);
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + spread, 0, Math.PI*2);
+      ctx.fillStyle = glow;
+      ctx.fill();
+    }
+
+    // ── DRAW ICON ON PLANET ───────────────────────
+    function drawIcon(ctx, size, type) {
+      const cx = size/2, cy = size/2;
+      ctx.save();
+      ctx.shadowBlur = 10;
+
+      if (type === 'about') {
+        // Person silhouette
+        ctx.shadowColor = 'rgba(255,180,120,0.8)';
+        ctx.fillStyle = 'rgba(255,200,160,0.9)';
+        // head
+        ctx.beginPath();
+        ctx.arc(cx, cy - 14, 10, 0, Math.PI*2);
+        ctx.fill();
+        // body
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 8, 14, 18, 0, Math.PI, Math.PI*2);
+        ctx.fill();
+
+      } else if (type === 'works') {
+        // Play button / film frame
+        ctx.shadowColor = 'rgba(0,240,200,0.8)';
+        ctx.strokeStyle = 'rgba(0,240,200,0.9)';
+        ctx.fillStyle   = 'rgba(0,240,200,0.9)';
+        ctx.lineWidth = 2.5;
+        // film strip bars
+        ctx.fillRect(cx - 22, cy - 18, 5, 36);
+        ctx.fillRect(cx + 17, cy - 18, 5, 36);
+        // play triangle
+        ctx.beginPath();
+        ctx.moveTo(cx - 9, cy - 14);
+        ctx.lineTo(cx + 14, cy);
+        ctx.lineTo(cx - 9, cy + 14);
+        ctx.closePath();
+        ctx.fill();
+
+      } else if (type === 'links') {
+        // Chain link / external link icon
+        ctx.shadowColor = 'rgba(255,210,80,0.9)';
+        ctx.strokeStyle = 'rgba(255,220,100,0.95)';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        // left link oval
+        ctx.beginPath();
+        ctx.ellipse(cx - 10, cy, 7, 13, -0.5, 0, Math.PI*2);
+        ctx.stroke();
+        // right link oval
+        ctx.beginPath();
+        ctx.ellipse(cx + 10, cy, 7, 13, 0.5, 0, Math.PI*2);
+        ctx.stroke();
+
+      } else if (type === 'faq') {
+        // Question mark
+        ctx.shadowColor = 'rgba(180,140,255,0.9)';
+        ctx.fillStyle   = 'rgba(200,170,255,0.95)';
+        ctx.font = `bold ${Math.floor(size * 0.38)}px Orbitron, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('?', cx + 1, cy + 2);
+      }
+
+      ctx.restore();
+    }
+
+    // ── PLANET 1: ABOUT — lava / magma world ─────
+    function drawAboutPlanet() {
+      const c = document.getElementById('planet-about');
+      const x = c.getContext('2d');
+      const S = c.width;
+      x.clearRect(0, 0, S, S);
+
+      drawGlowRing(x, S, 'rgba(255,80,20,0.25)', 22);
+      drawPlanetBase(x, S, [
+        [0,    '#7a2500'],
+        [0.35, '#c44010'],
+        [0.65, '#8b1a00'],
+        [0.85, '#3d0800'],
+        [1,    '#1a0200'],
+      ]);
+      drawBands(x, S, [
+        { y: -18, h: 8,  color: 'rgba(255,120,30,A)',  alpha: 0.18 },
+        { y:  5,  h: 12, color: 'rgba(255,60,10,A)',   alpha: 0.22 },
+        { y:  25, h: 6,  color: 'rgba(200,40,5,A)',    alpha: 0.15 },
+      ]);
+      drawCraters(x, S, [
+        { x: -18, y: -8,  r: 9,  alpha: 0.28 },
+        { x:  15, y:  12, r: 7,  alpha: 0.22 },
+        { x:  -5, y:  20, r: 5,  alpha: 0.18 },
+      ]);
+      drawAtmosphere(x, S, 'rgba(200,50,0,0.25)');
+      drawNoiseTexture(x, S, 200, 80, 40, 0.32);
+      drawShineHighlight(x, S);
+      drawIcon(x, S, 'about');
+    }
+
+    // ── PLANET 2: WORKS — teal ocean world ───────
+    function drawWorksPlanet() {
+      const c = document.getElementById('planet-works');
+      const x = c.getContext('2d');
+      const S = c.width;
+      x.clearRect(0, 0, S, S);
+
+      drawGlowRing(x, S, 'rgba(0,200,180,0.22)', 22);
+      drawPlanetBase(x, S, [
+        [0,    '#003d40'],
+        [0.3,  '#006b6e'],
+        [0.6,  '#004d55'],
+        [0.85, '#001f25'],
+        [1,    '#000d10'],
+      ]);
+      // ocean swirl bands
+      drawBands(x, S, [
+        { y: -22, h: 10, color: 'rgba(0,255,200,A)', alpha: 0.15 },
+        { y:  0,  h: 14, color: 'rgba(0,200,220,A)', alpha: 0.18 },
+        { y:  22, h: 8,  color: 'rgba(0,160,180,A)', alpha: 0.12 },
+      ]);
+      // landmass blobs
+      const ctx2 = x;
+      ctx2.save();
+      ctx2.beginPath();
+      ctx2.arc(S/2, S/2, S/2-2, 0, Math.PI*2);
+      ctx2.clip();
+      ctx2.fillStyle = 'rgba(0,120,80,0.35)';
+      ctx2.beginPath();
+      ctx2.ellipse(S/2 + 14, S/2 - 10, 18, 12, 0.4, 0, Math.PI*2);
+      ctx2.fill();
+      ctx2.fillStyle = 'rgba(0,100,60,0.28)';
+      ctx2.beginPath();
+      ctx2.ellipse(S/2 - 20, S/2 + 14, 14, 9, -0.3, 0, Math.PI*2);
+      ctx2.fill();
+      ctx2.restore();
+      drawAtmosphere(x, S, 'rgba(0,180,200,0.20)');
+      drawNoiseTexture(x, S, 0, 180, 160, 0.28);
+      drawShineHighlight(x, S);
+      drawIcon(x, S, 'works');
+    }
+
+    // ── PLANET 3: LINKS — golden gas giant ───────
+    function drawLinksPlanet() {
+      const c = document.getElementById('planet-links');
+      const x = c.getContext('2d');
+      const S = c.width;
+      x.clearRect(0, 0, S, S);
+
+      drawGlowRing(x, S, 'rgba(255,180,30,0.28)', 28);
+      drawPlanetBase(x, S, [
+        [0,    '#5a3a00'],
+        [0.25, '#b87800'],
+        [0.5,  '#d4900a'],
+        [0.75, '#7a4800'],
+        [1,    '#2a1500'],
+      ]);
+      // gas bands — lots of them
+      drawBands(x, S, [
+        { y: -28, h: 7,  color: 'rgba(255,200,80,A)',  alpha: 0.20 },
+        { y: -16, h: 9,  color: 'rgba(200,130,20,A)',  alpha: 0.18 },
+        { y:  -3, h: 11, color: 'rgba(255,220,100,A)', alpha: 0.22 },
+        { y:  12, h: 8,  color: 'rgba(180,100,10,A)',  alpha: 0.16 },
+        { y:  24, h: 7,  color: 'rgba(255,180,40,A)',  alpha: 0.18 },
+      ]);
+      // great spot
+      x.save();
+      x.beginPath();
+      x.arc(S/2, S/2, S/2-2, 0, Math.PI*2);
+      x.clip();
+      x.fillStyle = 'rgba(200,80,0,0.30)';
+      x.beginPath();
+      x.ellipse(S/2 + 18, S/2 + 6, 16, 10, 0.2, 0, Math.PI*2);
+      x.fill();
+      x.restore();
+      // Saturn-like rings drawn OUTSIDE planet using CSS ring (handled by .planet-ring)
+      drawAtmosphere(x, S, 'rgba(220,150,0,0.22)');
+      drawNoiseTexture(x, S, 200, 140, 20, 0.30);
+      drawShineHighlight(x, S);
+      drawIcon(x, S, 'links');
+    }
+
+    // ── PLANET 4: FAQ — icy violet world ─────────
+    function drawFaqPlanet() {
+      const c = document.getElementById('planet-faq');
+      const x = c.getContext('2d');
+      const S = c.width;
+      x.clearRect(0, 0, S, S);
+
+      drawGlowRing(x, S, 'rgba(140,80,255,0.28)', 22);
+      drawPlanetBase(x, S, [
+        [0,    '#2a1060'],
+        [0.3,  '#4a2090'],
+        [0.6,  '#300a70'],
+        [0.85, '#150535'],
+        [1,    '#060015'],
+      ]);
+      drawBands(x, S, [
+        { y: -20, h: 8,  color: 'rgba(180,140,255,A)', alpha: 0.18 },
+        { y:  2,  h: 12, color: 'rgba(120,80,220,A)',  alpha: 0.15 },
+        { y:  20, h: 7,  color: 'rgba(200,160,255,A)', alpha: 0.12 },
+      ]);
+      // ice patches
+      x.save();
+      x.beginPath();
+      x.arc(S/2, S/2, S/2-2, 0, Math.PI*2);
+      x.clip();
+      x.fillStyle = 'rgba(220,210,255,0.18)';
+      x.beginPath();
+      x.ellipse(S/2 - 16, S/2 - 18, 14, 10, -0.3, 0, Math.PI*2);
+      x.fill();
+      x.fillStyle = 'rgba(200,190,255,0.12)';
+      x.beginPath();
+      x.ellipse(S/2 + 18, S/2 + 16, 10, 7, 0.4, 0, Math.PI*2);
+      x.fill();
+      x.restore();
+      drawCraters(x, S, [
+        { x: 10,  y: -15, r: 7, alpha: 0.15 },
+        { x: -20, y:  10, r: 5, alpha: 0.12 },
+      ]);
+      drawAtmosphere(x, S, 'rgba(100,60,200,0.22)');
+      drawNoiseTexture(x, S, 160, 120, 255, 0.26);
+      drawShineHighlight(x, S);
+      drawIcon(x, S, 'faq');
+    }
+
+    // ── RENDER ALL PLANETS ────────────────────────
+    function renderAllPlanets() {
+      drawAboutPlanet();
+      drawWorksPlanet();
+      drawLinksPlanet();
+      drawFaqPlanet();
+    }
+
+    // wait for fonts then render
+    document.fonts.ready.then(renderAllPlanets);
+
+    // ── PLANET HOVER INTERACTION ──────────────────
+    document.querySelectorAll('.planet-wrap').forEach(wrap => {
+      wrap.addEventListener('mouseenter', () => {
+        wrap.classList.add('targeted');
+      });
+      wrap.addEventListener('mouseleave', () => {
+        wrap.classList.remove('targeted');
+      });
+    });
+
+  </script>
+
+  <!-- ============================================
+       JAVASCRIPT — SPACESHIP ENGINE
+  ============================================= -->
+  <script>
+    const ship      = document.getElementById('spaceship');
+    const eCvs      = document.getElementById('engine-canvas');
+    const eCtx      = eCvs.getContext('2d');
+    const aimLine   = document.getElementById('aim-line');
+    const dock      = document.getElementById('ship-dock');
+
+    // ── RESIZE ENGINE CANVAS ──────────────────────
+    function resizeEngineCvs() {
+      eCvs.width  = window.innerWidth;
+      eCvs.height = 160;
+    }
+    resizeEngineCvs();
+    window.addEventListener('resize', resizeEngineCvs);
+
+    // ── SHIP STATE ────────────────────────────────
+    // shipX = screen X of ship center (matches mouse clientX)
+    let shipX     = window.innerWidth / 2;
+    let shipTargX = window.innerWidth / 2;
+    let shipTilt  = 0;
+    let shipVelX  = 0;
+    const EASE    = 0.10;
+
+    // ship bottom px from viewport bottom (matches CSS bottom: 22px)
+    const SHIP_BOTTOM = 22;
+
+    // ── THRUST PARTICLES ─────────────────────────
+    let thrustParticles = [];
+
+    function spawnThrust() {
+      const shipH   = ship.offsetHeight || 88;
+      const shipW   = ship.offsetWidth  || 60;
+      // nozzle Y in canvas coords (canvas is pinned to bottom of screen)
+      const nozzleY = eCvs.height - SHIP_BOTTOM - 4;
+
+      const nozzles = [
+        { ox: -shipW * 0.24 },
+        { ox:  0 },
+        { ox:  shipW * 0.24 },
+      ];
+      const COLORS = ['rgba(0,220,255,','rgba(80,180,255,','rgba(140,220,255,','rgba(0,160,255,'];
+
+      nozzles.forEach(n => {
+        const spread = (Math.random() - 0.5) * 7;
+        thrustParticles.push({
+          x:     shipX + n.ox + spread,
+          y:     nozzleY,
+          vx:    spread * 0.15,
+          vy:    1.6 + Math.random() * 2.2,
+          life:  1.0,
+          decay: 0.032 + Math.random() * 0.04,
+          r:     2.5 + Math.random() * 3,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        });
+      });
+    }
+
+    // ── AIM LINE UPDATE ───────────────────────────
+    function updateAimLine() {
+      let nearest = null, nearDist = Infinity;
+      document.querySelectorAll('.planet-wrap').forEach(w => {
+        const rect = w.getBoundingClientRect();
+        const px   = rect.left + rect.width / 2;
+        const dist = Math.abs(px - shipX);
+        if (dist < nearDist) { nearDist = dist; nearest = rect; }
+      });
+      if (!nearest || nearDist > 220) { aimLine.style.opacity = '0'; return; }
+
+      const shipTopY  = window.innerHeight - SHIP_BOTTOM - (ship.offsetHeight || 88);
+      const planetBtm = nearest.bottom;
+      const h = shipTopY - planetBtm;
+      if (h < 0) { aimLine.style.opacity = '0'; return; }
+
+      aimLine.style.opacity    = String((1 - nearDist / 220).toFixed(2));
+      aimLine.style.left       = (shipX - 1) + 'px';
+      aimLine.style.top        = planetBtm + 'px';
+      aimLine.style.height     = h + 'px';
+    }
+
+    // ── MAIN SHIP LOOP ────────────────────────────
+    let frameT = 0;
+    function shipLoop() {
+      frameT++;
+
+      // eased X
+      const prevX = shipX;
+      shipX += (shipTargX - shipX) * EASE;
+      shipVelX = shipX - prevX;
+
+      // tilt
+      const tiltTarget = Math.max(-20, Math.min(20, shipVelX * 3));
+      shipTilt += (tiltTarget - shipTilt) * 0.13;
+
+      // Apply directly via fixed positioning
+      ship.style.left      = shipX + 'px';
+      ship.style.transform = `translateX(-50%) rotate(${shipTilt.toFixed(2)}deg)`;
+
+      // thrust every 2 frames
+      if (frameT % 2 === 0) spawnThrust();
+
+      // draw engine canvas
+      eCtx.clearRect(0, 0, eCvs.width, eCvs.height);
+
+      thrustParticles = thrustParticles.filter(p => p.life > 0);
+      thrustParticles.forEach(p => {
+        // core dot
+        eCtx.beginPath();
+        eCtx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+        eCtx.fillStyle = p.color + p.life.toFixed(2) + ')';
+        eCtx.fill();
+        // glow halo
+        const g = eCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 3.5);
+        g.addColorStop(0, p.color + (p.life * 0.35).toFixed(2) + ')');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        eCtx.beginPath();
+        eCtx.arc(p.x, p.y, p.r * 3.5, 0, Math.PI * 2);
+        eCtx.fillStyle = g;
+        eCtx.fill();
+        // move
+        p.x += p.vx; p.y += p.vy;
+        p.r *= 0.97; p.life -= p.decay;
+      });
+
+      // engine bloom
+      const bY    = eCvs.height - SHIP_BOTTOM + 6;
+      const pulse = 0.20 + Math.sin(frameT * 0.13) * 0.07;
+      const bloom = eCtx.createRadialGradient(shipX, bY, 0, shipX, bY, 42);
+      bloom.addColorStop(0,   `rgba(0,200,255,${pulse.toFixed(2)})`);
+      bloom.addColorStop(0.5, `rgba(0,100,255,${(pulse*0.45).toFixed(2)})`);
+      bloom.addColorStop(1,   'rgba(0,0,0,0)');
+      eCtx.beginPath();
+      eCtx.arc(shipX, bY, 42, 0, Math.PI * 2);
+      eCtx.fillStyle = bloom;
+      eCtx.fill();
+
+      updateAimLine();
+      requestAnimationFrame(shipLoop);
+    }
+
+    // mouse tracking
+    document.addEventListener('mousemove', e => { shipTargX = e.clientX; });
+    shipLoop();
+
+  </script>
+
+  <!-- ============================================
+       JAVASCRIPT — LASER & TARGETING SYSTEM
+  ============================================= -->
+  <script>
+    // ── SETUP LASER CANVAS ────────────────────────
+    const laserCvs   = document.getElementById('laser-canvas');
+    const lCtx       = laserCvs.getContext('2d');
+    const flashEl    = document.getElementById('impact-flash');
+
+    function resizeLaser() {
+      laserCvs.width  = window.innerWidth;
+      laserCvs.height = window.innerHeight;
+    }
+    resizeLaser();
+    window.addEventListener('resize', resizeLaser);
+
+    // ── LASER STATE ───────────────────────────────
+    let activeLaser   = null;   // current beam being drawn
+    let impactBursts  = [];     // explosion particles at planet
+    let isFiring      = false;  // lock clicks during animation
+    let pendingPlanet = null;   // which planet was clicked
+
+    // planet accent colors for beam color matching
+    const PLANET_COLORS = {
+      about: { beam: '#ff6030', glow: 'rgba(255,80,20,',  flash: 'rgba(255,60,0,0.12)'  },
+      works: { beam: '#00f0c8', glow: 'rgba(0,220,180,',  flash: 'rgba(0,200,150,0.12)' },
+      links: { beam: '#ffd060', glow: 'rgba(255,190,40,',  flash: 'rgba(255,160,0,0.12)' },
+      faq:   { beam: '#c0a0ff', glow: 'rgba(160,110,255,', flash: 'rgba(120,60,255,0.12)'},
+    };
+
+    // ── HELPERS ───────────────────────────────────
+    function getShipTopCenter() {
+      // ship nose = top of ship element in screen coords
+      const rect = ship.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height * 0.08 };
+    }
+
+    function getPlanetCenter(wrap) {
+      const rect = wrap.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+
+    // ── FIRE SEQUENCE ─────────────────────────────
+    function fireLaser(planetWrap) {
+      if (isFiring) return;
+      isFiring      = true;
+      pendingPlanet = planetWrap;
+
+      const pKey    = planetWrap.dataset.planet;
+      const colors  = PLANET_COLORS[pKey] || PLANET_COLORS.about;
+      const nose    = getShipTopCenter();
+      const target  = getPlanetCenter(planetWrap);
+
+      // STEP 1 — snap ship X to planet center
+      shipTargX = target.x;
+      shipX     = target.x;   // instant snap for laser alignment
+
+      // STEP 2 — charge flash on ship (brief white flash)
+      ship.style.filter = `drop-shadow(0 0 28px ${colors.beam}) drop-shadow(0 0 60px white)`;
+
+      setTimeout(() => {
+        // STEP 3 — spawn beam
+        activeLaser = {
+          x1: target.x,   // ship nose X (aligned)
+          y1: nose.y,
+          x2: target.x,
+          y2: target.y,
+          color:  colors,
+          life:   1.0,
+          phase:  'travel',  // travel → impact → fade
+          travelT: 0,
+          maxT:    18,        // frames to reach planet
+        };
+        ship.style.filter = `drop-shadow(0 0 12px rgba(0,245,255,0.7)) drop-shadow(0 0 28px rgba(0,180,255,0.4))`;
+      }, 120);
+    }
+
+    // ── SPAWN IMPACT BURST ────────────────────────
+    function spawnImpact(x, y, colors) {
+      // radial explosion particles
+      for (let i = 0; i < 28; i++) {
+        const angle = (Math.PI * 2 * i) / 28 + (Math.random() - 0.5) * 0.3;
+        const speed = 2.5 + Math.random() * 5;
+        impactBursts.push({
+          x, y,
+          vx:    Math.cos(angle) * speed,
+          vy:    Math.sin(angle) * speed,
+          r:     2 + Math.random() * 4,
+          life:  1.0,
+          decay: 0.03 + Math.random() * 0.04,
+          color: colors.glow,
+        });
+      }
+      // ring shockwave data stored separately
+      impactBursts.push({
+        type:  'ring',
+        x, y,
+        r:     10,
+        maxR:  80,
+        life:  1.0,
+        decay: 0.04,
+        color: colors.glow,
+      });
+
+      // screen flash
+      flashEl.style.background = colors.flash;
+      flashEl.style.opacity    = '1';
+      setTimeout(() => { flashEl.style.opacity = '0'; }, 80);
+
+      // planet shake
+      pendingPlanet.classList.add('shaking');
+      setTimeout(() => pendingPlanet.classList.remove('shaking'), 400);
+    }
+
+    // ── LASER RENDER LOOP ─────────────────────────
+    function laserLoop() {
+      lCtx.clearRect(0, 0, laserCvs.width, laserCvs.height);
+
+      // ── DRAW ACTIVE BEAM ──
+      if (activeLaser) {
+        const L = activeLaser;
+        L.travelT++;
+
+        if (L.phase === 'travel') {
+          // beam grows from ship to planet over maxT frames
+          const progress = Math.min(L.travelT / L.maxT, 1);
+          const nose     = getShipTopCenter();
+          const target   = getPlanetCenter(pendingPlanet);
+
+          const beamY2 = nose.y + (target.y - nose.y) * progress;
+          const beamX  = target.x; // always straight up (ship is aligned)
+
+          // outer glow
+          const gw = lCtx.createLinearGradient(beamX, nose.y, beamX, beamY2);
+          gw.addColorStop(0,   L.color.glow + '0)');
+          gw.addColorStop(0.3, L.color.glow + '0.6)');
+          gw.addColorStop(1,   L.color.glow + '0.9)');
+          lCtx.beginPath();
+          lCtx.moveTo(beamX, nose.y);
+          lCtx.lineTo(beamX, beamY2);
+          lCtx.strokeStyle = gw;
+          lCtx.lineWidth   = 12;
+          lCtx.lineCap     = 'round';
+          lCtx.stroke();
+
+          // inner bright core
+          const gc = lCtx.createLinearGradient(beamX, nose.y, beamX, beamY2);
+          gc.addColorStop(0, 'rgba(255,255,255,0)');
+          gc.addColorStop(0.4, L.color.beam);
+          gc.addColorStop(1, '#ffffff');
+          lCtx.beginPath();
+          lCtx.moveTo(beamX, nose.y);
+          lCtx.lineTo(beamX, beamY2);
+          lCtx.strokeStyle = gc;
+          lCtx.lineWidth   = 3;
+          lCtx.stroke();
+
+          // draw leading tip spark
+          const sparkG = lCtx.createRadialGradient(beamX, beamY2, 0, beamX, beamY2, 14);
+          sparkG.addColorStop(0, '#ffffff');
+          sparkG.addColorStop(0.4, L.color.beam);
+          sparkG.addColorStop(1, 'rgba(0,0,0,0)');
+          lCtx.beginPath();
+          lCtx.arc(beamX, beamY2, 14, 0, Math.PI * 2);
+          lCtx.fillStyle = sparkG;
+          lCtx.fill();
+
+          if (progress >= 1) {
+            L.phase   = 'impact';
+            L.travelT = 0;
+            spawnImpact(beamX, target.y, L.color);
+          }
+
+        } else if (L.phase === 'impact') {
+          // hold beam bright for a moment then fade
+          const nose   = getShipTopCenter();
+          const target = getPlanetCenter(pendingPlanet);
+          const beamX  = target.x;
+
+          L.life -= 0.06;
+          if (L.life <= 0) {
+            activeLaser = null;
+            isFiring    = false;
+            // open modal after short pause
+            setTimeout(() => openModal(pendingPlanet.dataset.planet), 180);
+          } else {
+            // fading beam
+            lCtx.globalAlpha = L.life;
+            const gf = lCtx.createLinearGradient(beamX, nose.y, beamX, target.y);
+            gf.addColorStop(0, L.color.glow + '0)');
+            gf.addColorStop(1, L.color.glow + '0.8)');
+            lCtx.beginPath();
+            lCtx.moveTo(beamX, nose.y);
+            lCtx.lineTo(beamX, target.y);
+            lCtx.strokeStyle = gf;
+            lCtx.lineWidth   = 8 * L.life;
+            lCtx.stroke();
+            lCtx.globalAlpha = 1;
+          }
+        }
+      }
+
+      // ── DRAW IMPACT PARTICLES ──
+      impactBursts = impactBursts.filter(p => p.life > 0);
+      impactBursts.forEach(p => {
+        if (p.type === 'ring') {
+          // expanding shockwave ring
+          lCtx.beginPath();
+          lCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          lCtx.strokeStyle = p.color + p.life.toFixed(2) + ')';
+          lCtx.lineWidth   = 2.5 * p.life;
+          lCtx.stroke();
+          p.r    += (p.maxR - p.r) * 0.12;
+          p.life -= p.decay;
+        } else {
+          // spark particle
+          lCtx.beginPath();
+          lCtx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+          lCtx.fillStyle = p.color + p.life.toFixed(2) + ')';
+          lCtx.fill();
+          p.x    += p.vx;
+          p.y    += p.vy;
+          p.vx   *= 0.92;
+          p.vy   *= 0.92;
+          p.life -= p.decay;
+        }
+      });
+
+      requestAnimationFrame(laserLoop);
+    }
+    laserLoop();
+
+    // ── CLICK PLANETS TO FIRE ─────────────────────
+    document.querySelectorAll('.planet-wrap').forEach(wrap => {
+      wrap.addEventListener('click', e => {
+        e.stopPropagation();
+        if (isFiring) return;
+        fireLaser(wrap);
+      });
+    });
+
+  </script>
+
+  <!-- ============================================
+       JAVASCRIPT — MODAL SYSTEM
+  ============================================= -->
+  <script>
+    const backdrop    = document.getElementById('modal-backdrop');
+    const modalBox    = document.getElementById('modal-box');
+    const modalTitle  = document.getElementById('modal-title');
+    const modalSub    = document.getElementById('modal-subtitle');
+    const modalAccent = document.getElementById('modal-accent-bar');
+    const modalIcon   = document.getElementById('modal-planet-icon');
+    const modalThumb  = document.getElementById('modal-thumb');
+    const modalContent= document.getElementById('modal-content');
+    const modalClose  = document.getElementById('modal-close');
+
+    // ── PLANET CONTENT DATA ────────────────────────
+    // ✏️  EDIT YOUR INFO HERE, Nathan!
+    const MODAL_DATA = {
+      about: {
+        title:    'About Me',
+        subtitle: 'Who I am',
+        accent:   'linear-gradient(90deg, #ff6030, #ff9060)',
+        shadow:   'rgba(255,80,20,0.4)',
+        content: `
+          <p>Hey! I'm <strong style="color:#ff9060">Nathan "Nafre"</strong> — a video editor and developer based in the Philippines. I love combining creative storytelling with technical craft to build things that feel alive.</p>
+          <p>On the editing side, I work with cinematic cuts, color grading, and motion graphics. On the dev side, I build web experiences, tools, and interactive projects that push what a browser can do.</p>
+          <h3>Skills</h3>
+          <div class="tag-row">
+            <span class="tag">Video Editing</span>
+            <span class="tag">Color Grading</span>
+            <span class="tag">Motion Graphics</span>
+            <span class="tag">HTML / CSS / JS</span>
+            <span class="tag">After Effects</span>
+            <span class="tag">Premiere Pro</span>
+            <span class="tag">DaVinci Resolve</span>
+          </div>
+          <p>Currently open to freelance projects and collaborations. Let's make something great.</p>
+        `,
+      },
+
+      works: {
+        title:    'My Works',
+        subtitle: 'Projects & edits',
+        accent:   'linear-gradient(90deg, #00c8a0, #00f0c8)',
+        shadow:   'rgba(0,200,180,0.4)',
+        content: `
+          <p>Here's a selection of my recent projects — from video edits to web builds. More coming soon!</p>
+          <h3>Video Projects</h3>
+          <div class="tag-row">
+            <span class="tag">Cinematic Edits</span>
+            <span class="tag">Short Films</span>
+            <span class="tag">Trailers</span>
+            <span class="tag">Motion Graphics</span>
+          </div>
+          <p><em style="color:rgba(0,240,200,0.7)">📽️ Showreel and project links coming soon — check back!</em></p>
+          <h3>Dev Projects</h3>
+          <div class="tag-row">
+            <span class="tag">This Portfolio</span>
+            <span class="tag">Web Experiments</span>
+            <span class="tag">Interactive Tools</span>
+          </div>
+          <p>This portfolio itself is a dev project — built from scratch with pure HTML, CSS, and JavaScript. No frameworks, just code.</p>
+        `,
+      },
+
+      links: {
+        title:    'My Links',
+        subtitle: 'Find me online',
+        accent:   'linear-gradient(90deg, #c89000, #ffd060)',
+        shadow:   'rgba(200,160,0,0.4)',
+        content: `
+          <p>Connect with me, check out my work, or drop me a message. I'm always open to new projects and collabs.</p>
+          <h3>Socials & Portfolio</h3>
+          <a class="link-btn" href="#" target="_blank">🎬 YouTube</a>
+          <a class="link-btn" href="#" target="_blank">🐦 Twitter / X</a>
+          <a class="link-btn" href="#" target="_blank">📸 Instagram</a>
+          <a class="link-btn" href="#" target="_blank">💼 LinkedIn</a>
+          <a class="link-btn" href="#" target="_blank">🐙 GitHub</a>
+          <h3>Work With Me</h3>
+          <p>Available for freelance video editing, motion graphics, and web development projects. Response time is usually within 24 hours.</p>
+          <a class="link-btn" href="mailto:your@email.com">✉️ Email Me</a>
+        `,
+      },
+
+      faq: {
+        title:    'FAQ',
+        subtitle: 'Common questions',
+        accent:   'linear-gradient(90deg, #7040cc, #c0a0ff)',
+        shadow:   'rgba(140,80,255,0.4)',
+        content: `
+          <p>Got questions? Here are the ones I get asked most often.</p>
+          <div class="faq-item">
+            <div class="faq-q">Are you available for freelance work? <i class="arrow">▾</i></div>
+            <div class="faq-a">Yes! I'm currently open to freelance video editing and web development projects. Feel free to reach out via the Links section.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">What software do you use for editing? <i class="arrow">▾</i></div>
+            <div class="faq-a">Primarily DaVinci Resolve and Adobe Premiere Pro for editing, After Effects for motion graphics, and Photoshop for thumbnails and assets.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">How long does a typical project take? <i class="arrow">▾</i></div>
+            <div class="faq-a">It depends on the scope! A short edit can be done in 1–2 days, while a longer cinematic project may take 1–2 weeks. I'll always give you a clear timeline upfront.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">Do you do web development too? <i class="arrow">▾</i></div>
+            <div class="faq-a">Yes — this portfolio was built entirely by hand with HTML, CSS, and JavaScript. I love building creative, interactive web experiences.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">Where are you based? <i class="arrow">▾</i></div>
+            <div class="faq-a">I'm based in the Philippines and work with clients globally. Remote-first, always.</div>
+          </div>
+        `,
+      },
+    };
+
+    // ── MINI PLANET ICON FOR MODAL HEADER ──────────
+    function drawModalIcon(key) {
+      // reuse planet drawing functions from Step 2
+      const c   = modalIcon;
+      const ctx = c.getContext('2d');
+      const S   = c.width;
+      ctx.clearRect(0, 0, S, S);
+      // map key → planet draw function
+      const draws = { about: drawAboutPlanet, works: drawWorksPlanet, links: drawLinksPlanet, faq: drawFaqPlanet };
+      // temporarily swap canvas
+      const origCanvas = document.getElementById('planet-' + key);
+      if (!origCanvas) return;
+      const origCtx    = origCanvas.getContext('2d');
+      // just copy the image from the existing planet canvas, scaled down
+      ctx.drawImage(origCanvas, 0, 0, S, S);
+    }
+
+    // ── OPEN MODAL ─────────────────────────────────
+    function openModal(planetKey) {
+      const data = MODAL_DATA[planetKey];
+      if (!data) return;
+
+      modalAccent.style.background = data.accent;
+      modalBox.style.boxShadow     = `0 0 0 1px rgba(255,255,255,0.04), 0 8px 60px rgba(0,0,0,0.7), 0 0 80px ${data.shadow}, inset 0 1px 0 rgba(255,255,255,0.08)`;
+
+      modalTitle.textContent   = data.title;
+      modalSub.textContent     = data.subtitle;
+      modalContent.innerHTML   = data.content;
+
+      drawModalIcon(planetKey);
+      modalThumb.style.display = 'none';
+
+      backdrop.classList.add('open');
+      initFAQ();
+    }
+
+    // ── CLOSE MODAL ────────────────────────────────
+    function closeModal() {
+      backdrop.classList.remove('open');
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ── FAQ ACCORDION ──────────────────────────────
+    function initFAQ() {
+      document.querySelectorAll('.faq-q').forEach(q => {
+        q.addEventListener('click', () => {
+          const item = q.parentElement;
+          const wasOpen = item.classList.contains('open');
+          document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+          if (!wasOpen) item.classList.add('open');
+        });
+      });
+    }
+
+    // ============================================
+    // AUDIO ENGINE — all synthesized, no files
+    // ============================================
+
+    let audioCtx     = null;
+    let musicPlaying = false;
+    let masterGain   = null;
+    let ambientNodes = [];
+
+    function initAudio() {
+      if (audioCtx) return;
+      audioCtx   = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(0.45, audioCtx.currentTime);
+      masterGain.connect(audioCtx.destination);
+    }
+
+    function midiHz(note) {
+      return 440 * Math.pow(2, (note - 69) / 12);
+    }
+
+    function makeNoise(gainVal, start, dur, filterFreq, dest) {
+      const bufSize = Math.floor(audioCtx.sampleRate * Math.min(dur + 0.1, 3));
+      const buf  = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+      const src    = audioCtx.createBufferSource();
+      src.buffer   = buf;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type  = 'bandpass';
+      filter.frequency.value = filterFreq;
+      filter.Q.value = 2;
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(gainVal, start + 0.05);
+      g.gain.linearRampToValueAtTime(0, start + dur);
+      src.connect(filter);
+      filter.connect(g);
+      g.connect(dest || masterGain);
+      src.start(start);
+      src.stop(start + dur + 0.1);
+    }
+
+    // ---- AMBIENT MUSIC ----
+    function startAmbientMusic() {
+      if (!audioCtx) return;
+      ambientNodes = [];
+      const now = audioCtx.currentTime;
+
+      const musicGain = audioCtx.createGain();
+      musicGain.gain.setValueAtTime(0, now);
+      musicGain.gain.linearRampToValueAtTime(0.55, now + 3.5);
+      musicGain.connect(masterGain);
+      ambientNodes.push(musicGain);
+
+      const reverbGain = audioCtx.createGain();
+      reverbGain.gain.value = 0.35;
+      reverbGain.connect(musicGain);
+      ambientNodes.push(reverbGain);
+
+      // Deep drone: C2 + G2 pairs slightly detuned
+      [midiHz(36), midiHz(36)*1.005, midiHz(43), midiHz(43)*1.004].forEach((f, i) => {
+        const osc = audioCtx.createOscillator();
+        const g   = audioCtx.createGain();
+        osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+        osc.frequency.value = f;
+        g.gain.value = 0.11;
+        osc.connect(g); g.connect(musicGain);
+        osc.start(now); osc.stop(now + 9999);
+        ambientNodes.push(osc, g);
+      });
+
+      // Chord swell pad: Cmaj7
+      [48, 52, 55, 59, 64].forEach((note, i) => {
+        const osc  = audioCtx.createOscillator();
+        const g    = audioCtx.createGain();
+        const lfo  = audioCtx.createOscillator();
+        const lfoG = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = midiHz(note);
+        lfo.frequency.value = 0.07 + i * 0.012;
+        lfoG.gain.value = 0.05;
+        g.gain.value = 0.05;
+        lfo.connect(lfoG); lfoG.connect(g.gain);
+        osc.connect(g); g.connect(reverbGain);
+        lfo.start(now); lfo.stop(now + 9999);
+        osc.start(now); osc.stop(now + 9999);
+        ambientNodes.push(osc, g, lfo, lfoG);
+      });
+
+      // Melody loop
+      const melody = [60,62,64,67,69,67,64,62,60,64,67,72,67,64,60,62];
+      const durs   = [1.6,1.4,1.8,1.2,2.0,1.6,1.4,1.8,1.2,1.6,1.4,2.0,1.6,1.4,1.8,2.4];
+      const melGain = audioCtx.createGain();
+      melGain.gain.value = 0.065;
+      melGain.connect(reverbGain);
+      ambientNodes.push(melGain);
+
+      let melT = now + 4;
+      const totalDur = durs.reduce((a, b) => a + b, 0);
+
+      function schedMelody() {
+        if (!musicPlaying) return;
+        melody.forEach((note, i) => {
+          const t = melT;
+          const d = durs[i] * 0.82;
+          const osc = audioCtx.createOscillator();
+          const g   = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(midiHz(note), t);
+          osc.frequency.linearRampToValueAtTime(midiHz(note) * 1.003, t + d * 0.5);
+          osc.frequency.linearRampToValueAtTime(midiHz(note), t + d);
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(0.85, t + 0.08);
+          g.gain.linearRampToValueAtTime(0, t + d);
+          osc.connect(g); g.connect(melGain);
+          osc.start(t); osc.stop(t + d + 0.1);
+          melT += durs[i];
+        });
+        setTimeout(schedMelody, (totalDur * 1000) - 200);
+      }
+      schedMelody();
+
+      // Shimmer highs
+      function spawnShimmer() {
+        if (!musicPlaying) return;
+        const shimNotes = [72,74,76,79,81,84,86,88];
+        const note = shimNotes[Math.floor(Math.random() * shimNotes.length)];
+        const t    = audioCtx.currentTime;
+        const osc  = audioCtx.createOscillator();
+        const g    = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = midiHz(note);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.038, t + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 2.4);
+        osc.connect(g); g.connect(reverbGain);
+        osc.start(t); osc.stop(t + 2.5);
+        setTimeout(spawnShimmer, 900 + Math.random() * 3000);
+      }
+      setTimeout(spawnShimmer, 2000);
+    }
+
+    function stopAmbientMusic() {
+      const now = audioCtx ? audioCtx.currentTime : 0;
+      ambientNodes.forEach(n => {
+        try { if (n.gain && n.gain.linearRampToValueAtTime) n.gain.linearRampToValueAtTime(0, now + 1.5); } catch(e) {}
+        try { if (n.stop) n.stop(now + 1.6); } catch(e) {}
+      });
+      ambientNodes = [];
+    }
+
+    // ---- SFX: LASER CHARGE ----
+    function sfxLaserCharge(planetKey) {
+      if (!audioCtx) return;
+      const now  = audioCtx.currentTime;
+      const fMap = { about: 280, works: 340, links: 300, faq: 260 };
+      const baseF = fMap[planetKey] || 300;
+      const osc = audioCtx.createOscillator();
+      const g   = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(baseF, now);
+      osc.frequency.exponentialRampToValueAtTime(baseF * 3.5, now + 0.11);
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.18, now + 0.02);
+      g.gain.linearRampToValueAtTime(0, now + 0.12);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.15);
+      makeNoise(0.3, now, 0.06, 120, masterGain);
+    }
+
+    // ---- SFX: LASER BEAM ----
+    function sfxLaserBeam(planetKey) {
+      if (!audioCtx) return;
+      const now  = audioCtx.currentTime;
+      const fMap = { about: 440, works: 520, links: 480, faq: 400 };
+      const baseF = fMap[planetKey] || 460;
+      const osc  = audioCtx.createOscillator();
+      const filt = audioCtx.createBiquadFilter();
+      const g    = audioCtx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(baseF * 2, now);
+      osc.frequency.exponentialRampToValueAtTime(baseF * 0.5, now + 0.32);
+      filt.type = 'lowpass'; filt.frequency.value = 1800;
+      g.gain.setValueAtTime(0.22, now);
+      g.gain.linearRampToValueAtTime(0, now + 0.34);
+      osc.connect(filt); filt.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.36);
+      makeNoise(0.12, now, 0.3, 600, masterGain);
+    }
+
+    // ---- SFX: IMPACT ----
+    function sfxImpact() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g   = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+      g.gain.setValueAtTime(0.55, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.3);
+      makeNoise(0.4,  now,        0.18, 800,  masterGain);
+      makeNoise(0.2,  now,        0.35, 200,  masterGain);
+      makeNoise(0.15, now + 0.04, 0.2,  3000, masterGain);
+      const ping = audioCtx.createOscillator();
+      const pg   = audioCtx.createGain();
+      ping.type = 'sine';
+      ping.frequency.setValueAtTime(1200, now + 0.02);
+      ping.frequency.exponentialRampToValueAtTime(600, now + 0.18);
+      pg.gain.setValueAtTime(0.15, now + 0.02);
+      pg.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      ping.connect(pg); pg.connect(masterGain);
+      ping.start(now + 0.02); ping.stop(now + 0.22);
+    }
+
+    // ---- SFX: MODAL OPEN ----
+    function sfxModalOpen(planetKey) {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const noteMap = {
+        about: [64, 67, 72],
+        works: [64, 69, 74],
+        links: [67, 71, 74],
+        faq:   [60, 65, 69],
+      };
+      const notes = noteMap[planetKey] || noteMap.about;
+      notes.forEach((note, i) => {
+        const t = now + i * 0.09;
+        const osc = audioCtx.createOscillator();
+        const g   = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = midiHz(note);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.14, t + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+        osc.connect(g); g.connect(masterGain);
+        osc.start(t); osc.stop(t + 0.75);
+      });
+    }
+
+    // ---- SFX: MODAL CLOSE ----
+    function sfxModalClose() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g   = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.18);
+      g.gain.setValueAtTime(0.1, now);
+      g.gain.linearRampToValueAtTime(0, now + 0.2);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.22);
+    }
+
+    // ---- SFX: HOVER TICK ----
+    function sfxHoverTick() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g   = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 900 + Math.random() * 200;
+      g.gain.setValueAtTime(0.04, now);
+      g.gain.linearRampToValueAtTime(0, now + 0.05);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + 0.06);
+    }
+
+    // ---- BGM — Real Audio File ----
+    const bgm    = document.getElementById('bgm');
+    const musicBtn = document.getElementById('music-btn');
+
+    // Set volume and default state
+    bgm.volume  = 0.45;
+    bgm.loop    = true;
+    let bgmMuted = false;
+
+    // Auto-play on first user interaction (browser policy requires gesture)
+    let bgmStarted = false;
+    function tryStartBGM() {
+      if (bgmStarted) return;
+      bgmStarted = true;
+      bgm.play().catch(() => {
+        // Auto-play blocked - user must click the button
+        bgmStarted = false;
+      });
+    }
+
+    // Try to start on any interaction
+    document.addEventListener('click',     tryStartBGM, { once: true });
+    document.addEventListener('mousemove', tryStartBGM, { once: true });
+    document.addEventListener('keydown',   tryStartBGM, { once: true });
+
+    // Mute / Unmute button
+    musicBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tryStartBGM();
+      bgmMuted = !bgmMuted;
+      bgm.muted = bgmMuted;
+      if (bgmMuted) {
+        musicBtn.classList.add('muted');
+        musicBtn.innerHTML = '&#128264;'; // muted speaker
+        musicBtn.title = 'Unmute BGM';
+      } else {
+        musicBtn.classList.remove('muted');
+        musicBtn.innerHTML = '&#128266;'; // loud speaker
+        musicBtn.title = 'Mute BGM';
+      }
+    });
+
+    // ---- WIRE SFX TO EVENTS ----
+
+    // Hover tick on planets
+    document.querySelectorAll('.planet-wrap').forEach(wrap => {
+      wrap.addEventListener('mouseenter', () => {
+        initAudio();
+        sfxHoverTick();
+      });
+    });
+
+    // Override fireLaser to add charge + beam SFX
+    // (fireLaser is defined in the laser script block above, same page scope)
+    const _baseFire = fireLaser;
+    fireLaser = function(planetWrap) {
+      initAudio();
+      const pKey = planetWrap.dataset.planet;
+      sfxLaserCharge(pKey);
+      setTimeout(() => sfxLaserBeam(pKey), 125);
+      _baseFire(planetWrap);
+    };
+
+    // Override spawnImpact for impact SFX
+    const _baseImpact = spawnImpact;
+    spawnImpact = function(x, y, colors) {
+      sfxImpact();
+      _baseImpact(x, y, colors);
+    };
+
+    // Override openModal for chime
+    const _baseOpen = openModal;
+    openModal = function(planetKey) {
+      initAudio();
+      sfxModalOpen(planetKey);
+      _baseOpen(planetKey);
+    };
+
+    // Override closeModal for whoosh
+    const _baseClose = closeModal;
+    closeModal = function() {
+      initAudio();
+      sfxModalClose();
+      _baseClose();
+    };
+
+    // Re-wire close listeners to use overridden closeModal
+    modalClose.onclick = () => closeModal();
+    backdrop.onclick = e => { if (e.target === backdrop) closeModal(); };
+
+  </script>
+
+</body>
+</html>
