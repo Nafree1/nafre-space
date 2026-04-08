@@ -652,6 +652,175 @@
       transition: transform 0.05s;
     }
 
+    /* =============================================
+       MOBILE RESPONSIVE — max 768px
+    ============================================= */
+    @media (max-width: 768px) {
+
+      /* restore normal cursor on touch */
+      html, body { cursor: auto; }
+      #cursor-dot { display: none; }
+
+      /* tighten scene padding */
+      #scene { padding: 28px 0 0 0; }
+
+      /* --- GREETING --- */
+      #greeting .hello {
+        font-size: clamp(11px, 3.5vw, 15px);
+        letter-spacing: 0.22em;
+        margin-bottom: 4px;
+      }
+      #greeting .name {
+        font-size: clamp(26px, 8.5vw, 44px);
+        letter-spacing: 0.05em;
+      }
+      #greeting .role {
+        font-size: clamp(10px, 3vw, 14px);
+        letter-spacing: 0.18em;
+        margin-top: 6px;
+      }
+      #greeting .copyright {
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        margin-top: 5px;
+      }
+
+      /* --- PLANETS ROW --- */
+      /* stack into 2x2 grid on small screens */
+      #planets-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px 12px;
+        padding: 0 24px;
+        flex: 1;
+        align-content: center;
+        justify-items: center;
+      }
+
+      .planet-canvas {
+        width:  clamp(72px, 20vw, 110px);
+        height: clamp(72px, 20vw, 110px);
+      }
+
+      .planet-ring {
+        width:  clamp(90px, 25vw, 140px);
+        height: clamp(22px, 6vw,  35px);
+      }
+
+      .planet-label {
+        font-size: clamp(8px, 2.5vw, 11px);
+        letter-spacing: 0.16em;
+        opacity: 0.75;
+      }
+
+      /* always show labels on mobile (no hover) */
+      .planet-wrap .planet-label { opacity: 0.75; }
+
+      /* tap highlight instead of hover glow */
+      .planet-wrap:active .planet-canvas {
+        filter: brightness(1.5) saturate(1.6);
+      }
+
+      /* --- SHIP DOCK --- */
+      #ship-dock { height: 90px; }
+
+      #spaceship {
+        width: clamp(38px, 10vw, 58px);
+        bottom: 14px;
+      }
+
+      /* hide aim line on mobile — ship follows touch */
+      #aim-line { display: none; }
+
+      /* --- MODAL --- */
+      #modal-box {
+        width: 94vw;
+        max-height: 88vh;
+        border-radius: 16px;
+      }
+
+      #modal-header {
+        padding: 16px 16px 12px;
+        gap: 12px;
+      }
+
+      #modal-planet-icon {
+        width: 36px; height: 36px;
+      }
+
+      #modal-title {
+        font-size: clamp(14px, 4.5vw, 18px);
+      }
+
+      #modal-subtitle { font-size: 10px; }
+
+      #modal-close {
+        top: 12px; right: 12px;
+        width: 30px; height: 30px;
+        font-size: 14px;
+      }
+
+      #modal-divider { margin: 0 16px; }
+
+      #modal-body { padding: 16px 16px 22px; }
+
+      #modal-content p  { font-size: 13px; line-height: 1.65; }
+      #modal-content h3 { font-size: 10px; }
+
+      .tag { font-size: 10px; padding: 3px 10px; }
+
+      .link-btn {
+        font-size: 12px;
+        padding: 9px 16px;
+        margin: 5px 6px 5px 0;
+      }
+
+      .faq-q { font-size: 13px; padding: 10px 14px; }
+      .faq-a { font-size: 12px; }
+
+      /* --- CREDITS --- */
+      #credits {
+        font-size: 8px;
+        max-width: 180px;
+        bottom: 12px;
+        left: 14px;
+      }
+
+      /* --- MUSIC BTN --- */
+      #music-btn {
+        width: 38px; height: 38px;
+        font-size: 17px;
+        bottom: 12px; right: 14px;
+      }
+    }
+
+    /* =============================================
+       EXTRA SMALL — max 420px (small phones)
+    ============================================= */
+    @media (max-width: 420px) {
+
+      #scene { padding: 20px 0 0 0; }
+
+      #greeting .name  { font-size: clamp(22px, 9vw, 34px); }
+      #greeting .hello { font-size: 11px; }
+      #greeting .role  { font-size: 10px; letter-spacing: 0.14em; }
+
+      #planets-row { gap: 14px 8px; padding: 0 16px; }
+
+      .planet-canvas {
+        width:  clamp(64px, 18vw, 88px);
+        height: clamp(64px, 18vw, 88px);
+      }
+
+      .planet-label { font-size: 8px; }
+
+      #ship-dock  { height: 72px; }
+      #spaceship  { width: 36px; bottom: 10px; }
+
+      #modal-box  { width: 97vw; max-height: 90vh; }
+      #modal-body { padding: 14px 14px 20px; }
+    }
+
   </style>
 </head>
 <body>
@@ -1337,14 +1506,18 @@
     // wait for fonts then render
     document.fonts.ready.then(renderAllPlanets);
 
-    // ── PLANET HOVER INTERACTION ──────────────────
+    // ── PLANET HOVER + TAP INTERACTION ───────────
     document.querySelectorAll('.planet-wrap').forEach(wrap => {
-      wrap.addEventListener('mouseenter', () => {
+      wrap.addEventListener('mouseenter', () => wrap.classList.add('targeted'));
+      wrap.addEventListener('mouseleave', () => wrap.classList.remove('targeted'));
+
+      // mobile tap: briefly highlight then fire
+      wrap.addEventListener('touchstart', () => {
         wrap.classList.add('targeted');
-      });
-      wrap.addEventListener('mouseleave', () => {
-        wrap.classList.remove('targeted');
-      });
+      }, { passive: true });
+      wrap.addEventListener('touchend', () => {
+        setTimeout(() => wrap.classList.remove('targeted'), 600);
+      }, { passive: true });
     });
 
   </script>
@@ -1493,6 +1666,16 @@
 
     // mouse tracking
     document.addEventListener('mousemove', e => { shipTargX = e.clientX; });
+
+    // touch tracking — ship follows finger X on mobile
+    document.addEventListener('touchmove', e => {
+      shipTargX = e.touches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchstart', e => {
+      shipTargX = e.touches[0].clientX;
+    }, { passive: true });
+
     shipLoop();
 
   </script>
