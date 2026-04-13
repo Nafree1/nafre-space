@@ -432,15 +432,15 @@
     /* body content */
     #modal-content p {
       font-family: 'Exo 2', sans-serif;
-      font-size: clamp(13px, 1.5vw, 15px);
+      font-size: clamp(26px, 3vw, 32px);
       font-weight: 300;
-      line-height: 1.75;
+      line-height: 1.8;
       color: rgba(230,220,255,0.85);
       margin-bottom: 14px;
     }
     #modal-content h3 {
       font-family: 'Orbitron', sans-serif;
-      font-size: 11px;
+      font-size: 22px;
       font-weight: 700;
       letter-spacing: 0.2em;
       text-transform: uppercase;
@@ -459,14 +459,14 @@
     }
 
     /* pill tags */
-    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 16px; }
     .tag {
       font-family: 'Exo 2', sans-serif;
-      font-size: 11px;
+      font-size: 22px;
       font-weight: 600;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      padding: 4px 12px;
+      padding: 8px 20px;
       border-radius: 99px;
       border: 1px solid rgba(255,255,255,0.12);
       background: rgba(255,255,255,0.04);
@@ -477,14 +477,14 @@
     .link-btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
+      gap: 10px;
+      padding: 14px 28px;
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.12);
       background: rgba(255,255,255,0.04);
       color: var(--text-main);
       font-family: 'Exo 2', sans-serif;
-      font-size: 13px;
+      font-size: 26px;
       font-weight: 600;
       text-decoration: none;
       transition: background 0.2s, border-color 0.2s, transform 0.15s;
@@ -501,11 +501,11 @@
     .faq-item { margin-bottom: 12px; }
     .faq-q {
       font-family: 'Exo 2', sans-serif;
-      font-size: 14px;
+      font-size: 26px;
       font-weight: 600;
       color: var(--text-main);
       cursor: pointer;
-      padding: 12px 16px;
+      padding: 16px 18px;
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.08);
       background: rgba(255,255,255,0.03);
@@ -514,22 +514,23 @@
       align-items: center;
       transition: background 0.2s;
       user-select: none;
+      gap: 12px;
     }
     .faq-q:hover { background: rgba(255,255,255,0.07); }
-    .faq-q .arrow { transition: transform 0.25s; font-style: normal; }
+    .faq-q .arrow { transition: transform 0.25s; font-style: normal; flex-shrink: 0; }
     .faq-item.open .faq-q .arrow { transform: rotate(180deg); }
     .faq-a {
       font-family: 'Exo 2', sans-serif;
-      font-size: 13px;
+      font-size: 24px;
       font-weight: 300;
-      line-height: 1.7;
+      line-height: 1.75;
       color: rgba(200,190,240,0.8);
-      padding: 0 16px;
+      padding: 0 18px;
       max-height: 0;
       overflow: hidden;
-      transition: max-height 0.3s ease, padding 0.3s ease;
+      transition: max-height 0.35s ease, padding 0.3s ease;
     }
-    .faq-item.open .faq-a { max-height: 200px; padding: 10px 16px 4px; }
+    .faq-item.open .faq-a { max-height: 400px; padding: 14px 18px 8px; }
 
     /* =============================================
        CREDITS
@@ -819,6 +820,374 @@
 
       #modal-box  { width: 97vw; max-height: 90vh; }
       #modal-body { padding: 14px 14px 20px; }
+    }
+
+    /* =============================================
+       RICH MODAL CONTENT STYLES
+    ============================================= */
+
+    /* ABOUT — profile card header */
+    .profile-card {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 22px;
+      padding: 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+    }
+    .profile-avatar {
+      width: 96px; height: 96px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #ff6030, #ff9060);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      border: 2px solid rgba(255,120,60,0.4);
+      box-shadow: 0 0 24px rgba(255,80,20,0.3);
+      overflow: hidden;
+    }
+    .profile-avatar img {
+      width: 100%; height: 100%;
+      object-fit: cover; border-radius: 50%;
+    }
+    .profile-info h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(20px, 3.2vw, 32px);
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .profile-info .profile-role {
+      font-family: 'Exo 2', sans-serif;
+      font-size: clamp(16px, 2vw, 22px);
+      color: var(--accent-cyan);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+    .profile-info .profile-loc {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 18px;
+      color: var(--text-dim);
+      margin-top: 5px;
+    }
+
+    /* section headings inside modal */
+    .modal-section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin: 20px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* bullet list styled */
+    .modal-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 14px;
+    }
+    .modal-list li {
+      font-family: 'Exo 2', sans-serif;
+      font-size: clamp(22px, 2.8vw, 28px);
+      font-weight: 300;
+      color: rgba(230,220,255,0.85);
+      line-height: 1.75;
+      padding: 5px 0 5px 26px;
+      position: relative;
+    }
+    .modal-list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent-cyan);
+      font-size: 14px;
+      top: 10px;
+    }
+
+    /* contact email banner */
+    .contact-banner {
+      margin-top: 18px;
+      padding: 14px 18px;
+      background: rgba(0,245,255,0.05);
+      border: 1px solid rgba(0,245,255,0.15);
+      border-radius: 12px;
+      font-family: 'Exo 2', sans-serif;
+      font-size: clamp(20px, 2.4vw, 26px);
+      color: rgba(220,240,255,0.85);
+      line-height: 1.65;
+    }
+    .contact-banner a {
+      color: var(--accent-cyan);
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(0,245,255,0.3);
+    }
+
+    /* WORKS — project cards */
+    .project-card {
+      display: flex;
+      gap: 14px;
+      padding: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      transition: background 0.2s, border-color 0.2s;
+      text-decoration: none;
+    }
+    .project-card:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(0,240,200,0.25);
+    }
+    .project-card-icon {
+      width: 56px; height: 56px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      background: rgba(255,255,255,0.05);
+    }
+    .project-card-info { flex: 1; min-width: 0; }
+    .project-card-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(16px, 2.2vw, 22px);
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+    .project-card-desc {
+      font-family: 'Exo 2', sans-serif;
+      font-size: clamp(16px, 2vw, 20px);
+      font-weight: 300;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+    .project-card-link {
+      font-size: 16px;
+      color: var(--accent-cyan);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 8px;
+      display: block;
+    }
+
+    /* LINKS — icon grid */
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+      margin: 12px 0 18px;
+    }
+    .link-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      text-decoration: none;
+      color: var(--text-main);
+      transition: background 0.2s, border-color 0.2s, transform 0.18s;
+      cursor: pointer;
+    }
+    .link-card:hover {
+      background: rgba(255,255,255,0.08);
+      transform: translateY(-3px);
+    }
+    .link-card svg { width: 42px; height: 42px; }
+    .link-card-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    /* individual link card accent colors */
+    .link-card.fb:hover   { border-color: rgba(24,119,242,0.5); }
+    .link-card.fb:hover svg { color: #1877f2; }
+    .link-card.ig:hover   { border-color: rgba(225,48,108,0.5); }
+    .link-card.ig:hover svg { color: #e1306c; }
+    .link-card.yt:hover   { border-color: rgba(255,0,0,0.5); }
+    .link-card.yt:hover svg { color: #ff0000; }
+    .link-card.tt:hover   { border-color: rgba(0,242,234,0.5); }
+    .link-card.tt:hover svg { color: #00f2ea; }
+    .link-card.em:hover   { border-color: rgba(0,245,255,0.5); }
+    .link-card.em:hover svg { color: var(--accent-cyan); }
+
+    @media (max-width: 768px) {
+      .profile-card { flex-direction: column; text-align: center; gap: 14px; padding: 14px; }
+      .profile-avatar { width: 70px; height: 70px; font-size: 28px; margin: 0 auto; }
+      .links-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .link-card { padding: 14px 8px; gap: 8px; }
+      .link-card svg { width: 26px; height: 26px; }
+      .project-card { flex-direction: column; }
+      .project-card-icon { width: 36px; height: 36px; font-size: 18px; }
+    }
+    @media (max-width: 420px) {
+      .links-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* =============================================
+       VIDEO PREVIEW CARDS
+    ============================================= */
+    .video-card {
+      display: block;
+      text-decoration: none;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      margin-bottom: 16px;
+      transition: transform 0.22s ease, border-color 0.22s, box-shadow 0.22s;
+    }
+    .video-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(0,240,200,0.35);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    /* thumbnail area with play button overlay */
+    .video-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: #0a0818;
+    }
+    .video-thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease, opacity 0.3s;
+    }
+    .video-card:hover .video-thumb img { transform: scale(1.04); opacity: 0.85; }
+
+    /* placeholder gradient when no image */
+    .video-thumb-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* play button */
+    .video-play-btn {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      border: 2px solid rgba(255,255,255,0.75);
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, transform 0.2s, border-color 0.2s;
+    }
+    .video-card:hover .video-play-btn {
+      background: rgba(0,245,255,0.25);
+      border-color: var(--accent-cyan);
+      transform: translate(-50%, -50%) scale(1.12);
+    }
+    .video-play-btn svg {
+      width: 22px; height: 22px;
+      fill: #fff;
+      margin-left: 3px;
+    }
+
+    /* duration badge */
+    .video-duration {
+      position: absolute;
+      bottom: 8px; right: 10px;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 5px;
+      letter-spacing: 0.05em;
+    }
+
+    /* category badge */
+    .video-badge {
+      position: absolute;
+      top: 10px; left: 10px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 99px;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      backdrop-filter: blur(4px);
+    }
+
+    /* info section below thumbnail */
+    .video-info {
+      padding: 14px 16px 16px;
+    }
+    .video-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(14px, 2vw, 18px);
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .video-subtitle {
+      font-family: 'Exo 2', sans-serif;
+      font-size: clamp(13px, 1.6vw, 15px);
+      font-weight: 300;
+      color: var(--text-dim);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    .video-watch-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0,245,255,0.3);
+      padding: 7px 16px;
+      border-radius: 8px;
+      background: rgba(0,245,255,0.05);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .video-card:hover .video-watch-btn {
+      background: rgba(0,245,255,0.12);
+      border-color: rgba(0,245,255,0.6);
+    }
+
+    /* 2-column video grid on wider modals */
+    .video-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 600px) {
+      .video-grid { grid-template-columns: 1fr; }
+      .video-play-btn { width: 48px; height: 48px; }
+      .video-play-btn svg { width: 18px; height: 18px; }
     }
 
   </style>
@@ -1937,101 +2306,264 @@
     const modalContent= document.getElementById('modal-content');
     const modalClose  = document.getElementById('modal-close');
 
-    // ── PLANET CONTENT DATA ────────────────────────
-    // ✏️  EDIT YOUR INFO HERE, Nathan!
     const MODAL_DATA = {
+
+      /* ==================== ABOUT ==================== */
       about: {
         title:    'About Me',
         subtitle: 'Who I am',
         accent:   'linear-gradient(90deg, #ff6030, #ff9060)',
         shadow:   'rgba(255,80,20,0.4)',
         content: `
-          <p>Hey! I'm <strong style="color:#ff9060">Nathan "Nafre"</strong> — a video editor and developer based in the Philippines. I love combining creative storytelling with technical craft to build things that feel alive.</p>
-          <p>On the editing side, I work with cinematic cuts, color grading, and motion graphics. On the dev side, I build web experiences, tools, and interactive projects that push what a browser can do.</p>
-          <h3>Skills</h3>
-          <div class="tag-row">
-            <span class="tag">Video Editing</span>
-            <span class="tag">Color Grading</span>
-            <span class="tag">Motion Graphics</span>
-            <span class="tag">HTML / CSS / JS</span>
-            <span class="tag">After Effects</span>
-            <span class="tag">Premiere Pro</span>
-            <span class="tag">DaVinci Resolve</span>
+          <div class="profile-card">
+            <div class="profile-avatar">
+              <img src="assets/visuals/MyPFP.png" alt="Nathan Fred Bragat" />
+            </div>
+            <div class="profile-info">
+              <h2>Nathan Fred C. Bragat</h2>
+              <div class="profile-role">Freelance Web Developer &amp; Video Editor</div>
+              <div class="profile-loc">&#127477;&#127469; Filipino &mdash; 18 years old</div>
+            </div>
           </div>
-          <p>Currently open to freelance projects and collaborations. Let's make something great.</p>
+
+          <p style="font-family:'Exo 2',sans-serif;font-size:clamp(12px,1.5vw,14px);font-weight:300;line-height:1.75;color:rgba(230,220,255,0.85);margin-bottom:14px;">
+            Yo! I'm Nathan Fred C. Bragat, a full stack web developer and video editor. I love building things that look good and feel alive &mdash; whether that's a unique website or a well-crafted video.
+          </p>
+
+          <div class="modal-section-title">What I Do</div>
+          <ul class="modal-list">
+            <li>Create unique, interactive websites</li>
+            <li>Produce documentation, explainer &amp; vlog videos</li>
+            <li>Rice on Linux (yes, this counts as a skill)</li>
+          </ul>
+
+          <div class="modal-section-title">Skills &amp; Tools</div>
+          <div class="tag-row">
+            <span class="tag">HTML / CSS / JS</span>
+            <span class="tag">Full Stack Dev</span>
+            <span class="tag">Video Editing</span>
+            <span class="tag">DaVinci Resolve</span>
+            <span class="tag">Premiere Pro</span>
+            <span class="tag">After Effects</span>
+            <span class="tag">Linux</span>
+          </div>
+
+          <div class="modal-section-title">Education</div>
+          <p style="font-family:'Exo 2',sans-serif;font-size:clamp(12px,1.5vw,14px);font-weight:400;color:rgba(220,210,255,0.9);margin-bottom:4px;">
+            Science, Technology, Engineering &amp; Mathematics &mdash; High School Graduate
+          </p>
+          <p style="font-family:'Exo 2',sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:16px;">
+            Graduated with Honors &mdash; 2026
+          </p>
+
+          <div class="modal-section-title">Hobbies</div>
+          <ul class="modal-list">
+            <li>Game Development</li>
+            <li>Playing the Dark Souls series</li>
+            <li>Pokemon TCG / Card Collecting</li>
+            <li>Avid Anime fan</li>
+            <li>Ricing Linux</li>
+          </ul>
+
+          <div class="contact-banner">
+            Wanna work with me? Send me an email at
+            <a href="mailto:BragatNathanFred@gmail.com">BragatNathanFred@gmail.com</a> :)
+          </div>
         `,
       },
 
+      /* ==================== WORKS ==================== */
       works: {
         title:    'My Works',
-        subtitle: 'Projects & edits',
+        subtitle: 'Projects &amp; Edits',
         accent:   'linear-gradient(90deg, #00c8a0, #00f0c8)',
         shadow:   'rgba(0,200,180,0.4)',
         content: `
-          <p>Here's a selection of my recent projects — from video edits to web builds. More coming soon!</p>
-          <h3>Video Projects</h3>
-          <div class="tag-row">
-            <span class="tag">Cinematic Edits</span>
-            <span class="tag">Short Films</span>
-            <span class="tag">Trailers</span>
-            <span class="tag">Motion Graphics</span>
+          <div class="modal-section-title">Video Editing &amp; Directing</div>
+
+          <div class="video-grid">
+
+            <!-- SIBOL -->
+            <a class="video-card" href="https://www.facebook.com/share/v/1XKEWxoeTH/" target="_blank">
+              <div class="video-thumb">
+                <img src="assets/visuals/Sibol.png" alt="Sibol" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.3s ease,opacity 0.3s;" />
+                <span class="video-badge" style="border-color:rgba(255,120,60,0.5);color:#ff9060;">Documentary</span>
+                <div class="video-play-btn">
+                  <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <span class="video-duration">Short Film</span>
+              </div>
+              <div class="video-info">
+                <div class="video-title">"Sibol"</div>
+                <div class="video-subtitle">A short research-based documentary exploring growth and beginnings.</div>
+                <span class="video-watch-btn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M8 5v14l11-7z"/></svg>
+                  Watch on Facebook
+                </span>
+              </div>
+            </a>
+
+            <!-- RESET -->
+            <a class="video-card" href="https://www.facebook.com/share/v/1DxCmuk31T/" target="_blank">
+              <div class="video-thumb">
+                <img src="assets/visuals/Reset.png" alt="Reset" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.3s ease,opacity 0.3s;" />
+                <span class="video-badge" style="border-color:rgba(0,200,255,0.5);color:#00c8ff;">Cinematic</span>
+                <div class="video-play-btn">
+                  <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <span class="video-duration">Short Film</span>
+              </div>
+              <div class="video-info">
+                <div class="video-title">"Reset"</div>
+                <div class="video-subtitle">A cinematic short about mental health and the power of physical fitness.</div>
+                <span class="video-watch-btn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M8 5v14l11-7z"/></svg>
+                  Watch on Facebook
+                </span>
+              </div>
+            </a>
+
           </div>
-          <p><em style="color:rgba(0,240,200,0.7)">📽️ Showreel and project links coming soon — check back!</em></p>
-          <h3>Dev Projects</h3>
-          <div class="tag-row">
-            <span class="tag">This Portfolio</span>
-            <span class="tag">Web Experiments</span>
-            <span class="tag">Interactive Tools</span>
+
+          <div class="modal-section-title">Web Development</div>
+
+          <div class="project-card" style="cursor:default;">
+            <div class="project-card-icon" style="background:rgba(0,245,255,0.1);">&#127760;</div>
+            <div class="project-card-info">
+              <div class="project-card-title">This Portfolio</div>
+              <div class="project-card-desc">Built from scratch with pure HTML, CSS, and JavaScript. Galaxy shooter theme, animated starfield, laser mechanic, synthesized SFX &mdash; no frameworks, just code.</div>
+            </div>
           </div>
-          <p>This portfolio itself is a dev project — built from scratch with pure HTML, CSS, and JavaScript. No frameworks, just code.</p>
+
+          <div class="project-card" style="cursor:default;">
+            <div class="project-card-icon" style="background:rgba(180,120,255,0.1);">&#128187;</div>
+            <div class="project-card-info">
+              <div class="project-card-title">More Coming Soon...</div>
+              <div class="project-card-desc">Working on new projects in the background. Come back after a while &mdash; maybe you will find something you like.</div>
+            </div>
+          </div>
+
+          <div class="modal-section-title">Linux Rice</div>
+
+          <a class="video-card" href="https://www.facebook.com/share/v/1CVNGmHpgX/" target="_blank">
+            <div class="video-thumb">
+              <img src="assets/visuals/Caelestia.png" alt="Arch Linux Caelestia Shell" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.3s ease,opacity 0.3s;" />
+              <span class="video-badge" style="border-color:rgba(80,220,120,0.5);color:#50dc78;">Linux Rice</span>
+              <div class="video-play-btn">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+              <span class="video-duration">Showcase</span>
+            </div>
+            <div class="video-info">
+              <div class="video-title">Arch Linux &mdash; Caelestia Shell</div>
+              <div class="video-subtitle">A custom desktop environment rice using the Caelestia Shell on Arch Linux.</div>
+              <span class="video-watch-btn">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M8 5v14l11-7z"/></svg>
+                Watch on Facebook
+              </span>
+            </div>
+          </a>
+
+          <p style="font-family:'Exo 2',sans-serif;font-size:16px;font-weight:300;color:var(--text-dim);margin-top:12px;font-style:italic;">
+            Still cooking new projects &mdash; check back soon!
+          </p>
         `,
       },
 
+      /* ==================== LINKS ==================== */
       links: {
         title:    'My Links',
         subtitle: 'Find me online',
         accent:   'linear-gradient(90deg, #c89000, #ffd060)',
         shadow:   'rgba(200,160,0,0.4)',
         content: `
-          <p>Connect with me, check out my work, or drop me a message. I'm always open to new projects and collabs.</p>
-          <h3>Socials & Portfolio</h3>
-          <a class="link-btn" href="#" target="_blank">🎬 YouTube</a>
-          <a class="link-btn" href="#" target="_blank">🐦 Twitter / X</a>
-          <a class="link-btn" href="#" target="_blank">📸 Instagram</a>
-          <a class="link-btn" href="#" target="_blank">💼 LinkedIn</a>
-          <a class="link-btn" href="#" target="_blank">🐙 GitHub</a>
-          <h3>Work With Me</h3>
-          <p>Available for freelance video editing, motion graphics, and web development projects. Response time is usually within 24 hours.</p>
-          <a class="link-btn" href="mailto:your@email.com">✉️ Email Me</a>
+          <p style="font-family:'Exo 2',sans-serif;font-size:clamp(12px,1.5vw,14px);font-weight:300;line-height:1.75;color:rgba(230,220,255,0.85);margin-bottom:18px;">
+            Connect with me, check out my work, or drop me a message. Always open to new projects and collabs!
+          </p>
+
+          <div class="links-grid">
+
+            <a class="link-card fb" href="https://www.facebook.com/Nathafilok" target="_blank">
+              <svg viewBox="0 0 24 24" fill="currentColor" color="#8878aa"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+              <span class="link-card-label">Facebook</span>
+            </a>
+
+            <a class="link-card ig" href="#" target="_blank">
+              <svg viewBox="0 0 24 24" fill="currentColor" color="#8878aa"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+              <span class="link-card-label">Instagram</span>
+            </a>
+
+            <a class="link-card yt" href="#" target="_blank">
+              <svg viewBox="0 0 24 24" fill="currentColor" color="#8878aa"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+              <span class="link-card-label">YouTube</span>
+            </a>
+
+            <a class="link-card tt" href="#" target="_blank">
+              <svg viewBox="0 0 24 24" fill="currentColor" color="#8878aa"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+              <span class="link-card-label">TikTok</span>
+            </a>
+
+            <a class="link-card em" href="mailto:BragatNathanFred@gmail.com">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" color="#8878aa"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span class="link-card-label">Email</span>
+            </a>
+
+          </div>
+
+          <p style="font-family:'Exo 2',sans-serif;font-size:11px;font-weight:300;color:var(--text-dim);text-align:center;margin-top:6px;">
+            Clicking any link opens a new tab
+          </p>
         `,
       },
 
+      /* ==================== FAQ ==================== */
       faq: {
         title:    'FAQ',
         subtitle: 'Common questions',
         accent:   'linear-gradient(90deg, #7040cc, #c0a0ff)',
         shadow:   'rgba(140,80,255,0.4)',
         content: `
-          <p>Got questions? Here are the ones I get asked most often.</p>
+          <p style="font-family:'Exo 2',sans-serif;font-size:clamp(12px,1.5vw,14px);font-weight:300;line-height:1.75;color:rgba(230,220,255,0.85);margin-bottom:16px;">
+            Got questions? Here are the ones I get asked most often.
+          </p>
           <div class="faq-item">
-            <div class="faq-q">Are you available for freelance work? <i class="arrow">▾</i></div>
-            <div class="faq-a">Yes! I'm currently open to freelance video editing and web development projects. Feel free to reach out via the Links section.</div>
+            <div class="faq-q">Are you available for freelance work? <i class="arrow">&#9662;</i></div>
+            <div class="faq-a">Yes! I am currently open to freelance web development and video editing projects. Feel free to reach out via the Links section or email me at BragatNathanFred@gmail.com.</div>
           </div>
           <div class="faq-item">
-            <div class="faq-q">What software do you use for editing? <i class="arrow">▾</i></div>
-            <div class="faq-a">Primarily DaVinci Resolve and Adobe Premiere Pro for editing, After Effects for motion graphics, and Photoshop for thumbnails and assets.</div>
+            <div class="faq-q">What kind of videos do you edit? <i class="arrow">&#9662;</i></div>
+            <div class="faq-a">I work on documentation, explainer, and vlog-style videos. I handle the full pipeline from raw footage to the final cut including color, audio, and motion graphics.</div>
           </div>
           <div class="faq-item">
-            <div class="faq-q">How long does a typical project take? <i class="arrow">▾</i></div>
-            <div class="faq-a">It depends on the scope! A short edit can be done in 1–2 days, while a longer cinematic project may take 1–2 weeks. I'll always give you a clear timeline upfront.</div>
+            <div class="faq-q">What software do you use? <i class="arrow">&#9662;</i></div>
+            <div class="faq-a">
+              For video editing I use <strong>DaVinci Resolve</strong> and <strong>Kdenlive</strong>. For web development my stack is:
+              <div class="tag-row" style="margin-top:10px;">
+                <span class="tag">HTML</span>
+                <span class="tag">CSS</span>
+                <span class="tag">JavaScript</span>
+                <span class="tag">Node.js</span>
+                <span class="tag">Git</span>
+                <span class="tag">Linux</span>
+                <span class="tag">VS Code</span>
+              </div>
+            </div>
           </div>
           <div class="faq-item">
-            <div class="faq-q">Do you do web development too? <i class="arrow">▾</i></div>
-            <div class="faq-a">Yes — this portfolio was built entirely by hand with HTML, CSS, and JavaScript. I love building creative, interactive web experiences.</div>
+            <div class="faq-q">Do you do full stack web development? <i class="arrow">&#9662;</i></div>
+            <div class="faq-a">Yes! I can handle both front-end and back-end. This portfolio itself was built from scratch with pure HTML, CSS, and JS &mdash; no frameworks, no templates.</div>
           </div>
           <div class="faq-item">
-            <div class="faq-q">Where are you based? <i class="arrow">▾</i></div>
-            <div class="faq-a">I'm based in the Philippines and work with clients globally. Remote-first, always.</div>
+            <div class="faq-q">How long does a project take? <i class="arrow">&#9662;</i></div>
+            <div class="faq-a">It depends on the scope. A short video edit can be done in 1 to 2 days. A full website can take 1 to 3 weeks depending on complexity. I always give a clear timeline before starting.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">Where are you based? <i class="arrow">&#9662;</i></div>
+            <div class="faq-a">I am based in the Philippines and work with clients remotely. Time zone is PHT (UTC+8).</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q">What is Linux ricing? <i class="arrow">&#9662;</i></div>
+            <div class="faq-a">Ricing is the practice of heavily customizing a Linux desktop environment to look exactly the way you want &mdash; custom window managers, color schemes, fonts, widgets, and more. It is part hobby, part art form.</div>
           </div>
         `,
       },
